@@ -186,7 +186,8 @@ canonical flat rule format used across the discovery pack (for example the rule 
       "additionalProperties": false,
       "properties": {
         "max_rows": { "type": "integer", "maximum": 10000 },
-        "timeout_seconds": { "type": "integer", "maximum": 120 }
+        "timeout_seconds": { "type": "integer", "maximum": 120 },
+        "max_findings_per_month": { "type": "integer", "minimum": 1 }
       }
     },
     "evidence": {
@@ -345,7 +346,32 @@ Interpretation:
 
 The score is recalculated by a scheduled job and stored on `dq_feedback_pattern`. It is an input to triage, never an automatic action.
 
-## 6. Backtesting Methodology
+## 6. Adaptive Threshold Calculation (Deterministic)
+
+Static thresholds drift out of date as volumes change, producing either false-positive spikes or
+missed issues. Thresholds can adapt without any machine learning, using a transparent, auditable
+rolling statistic per rule (or per rule + source + event-type segment).
+
+Over a rolling 7-day window of confirmed findings:
+
+```text
+mean   = average confirmed-finding count for the segment
+stddev = standard deviation of that count
+adaptive_threshold = max(mean + 2 * stddev, configured_static_threshold)
+```
+
+Behaviour:
+
+- Recalculated weekly by a scheduled job and stored alongside the rule version.
+- The adaptive value never goes below the rule's configured static threshold (a safety floor).
+- When the threshold changes, the rule owner is notified ("threshold auto-updated from X to Y"). If the
+  owner does not accept it, the previous threshold remains in force.
+- The calculation is deterministic and fully explainable, so it is suitable for audit and governance.
+
+This adapts to sudden volume changes and reduces false positives automatically while keeping a human
+owner in control of every change.
+
+## 7. Backtesting Methodology
 
 Before any suggested rule refinement is deployed, it is backtested against historical data:
 
@@ -363,7 +389,22 @@ Before any suggested rule refinement is deployed, it is backtested against histo
 
 Shadow mode is mandatory: a candidate rule must never write to the live findings store or trigger notifications during backtesting.
 
-## 7. Notification Templates
+### Deployment Progression: Shadow -> Canary -> Full
+
+A rule that passes backtesting is not switched straight to full production. It moves through staged
+activation so that any surprise is contained:
+
+1. **Shadow (7 days):** runs against live data with no findings written and no alerts (backtesting/validation).
+2. **Canary (1-2 days):** activated for a narrow slice only - for example a single source system, or
+   low-risk hours - with live findings and alerts but limited blast radius.
+3. **Full:** activated across the domain only after the canary produces no false-positive spike.
+
+Automatic rollback conditions are defined per rule and evaluated continuously after activation. A
+typical condition: if the false-positive rate exceeds 5% within 2 hours of activation (canary or full),
+the rule automatically reverts to the previous approved version and the owner is notified. Rollback
+uses the existing rule versioning; the previous version always remains deployable.
+
+## 8. Notification Templates
 
 ### Teams / Slack (High or Critical)
 
@@ -409,7 +450,7 @@ Labels: cerberos, data-assurance, {domain}
 
 All templates use masked references only. Raw PII must never appear in a notification.
 
-## 8. Agent Prompt Template and Guardrails
+## 9. Agent Prompt Template and Guardrails
 
 When the optional `AgentAnalysisService` is enabled, the agent receives only structured, masked context.
 
@@ -454,7 +495,7 @@ Guardrails enforced outside the model:
 - Prompt and response are written to the audit log.
 - The agent endpoint must be an approved enterprise LLM gateway.
 
-## 9. Integration Test Scenarios (PoC)
+## 10. Integration Test Scenarios (PoC)
 
 | # | Scenario | Expected result |
 | --- | --- | --- |
@@ -469,7 +510,7 @@ Guardrails enforced outside the model:
 | 9 | Suggested refinement backtested | Backtest report produced; no writes to live findings store |
 | 10 | Finding evidence requested | Only masked samples returned; raw PII never exposed |
 
-## 10. Data Quality Tooling Comparison
+## 11. Data Quality Tooling Comparison
 
 A focused comparison for the "build vs reuse" decision deferred in the main report.
 
@@ -490,3 +531,38 @@ custom platform up front.
 ## Glossary
 
 The shared terminology for this discovery pack is maintained on its own page: **Glossary**.
+
+## 12. Rule Complexity, Value, and Finding Quota
+
+These deterministic metrics keep the rule set sustainable as it grows from five rules toward hundreds.
+
+### Complexity Score
+
+Each rule is assigned a complexity score (1-10) derived from its shape:
+
+- Partition filter present (lower complexity if yes).
+- Number of joined tables.
+- Number of functions/expressions used.
+
+The score is used to prioritise rule review and cost optimisation. High-complexity, low-value rules
+are placed on a "rewrite recommended" list. The learning engine can suggest simpler rewrites of
+similar rules using a rule-based (non-ML) approach.
+
+### Rule Value Score
+
+```text
+value_score = (confirmed_findings * severity_weight) / (execution_cost + review_time)
+```
+
+Low value-score rules are surfaced for owner review and possible retirement, so effort and cost stay
+focused on rules that produce actionable assurance.
+
+### Monthly Finding Quota
+
+Each rule has a maximum monthly finding quota (for example 10,000). When the quota is reached:
+
+- The rule is automatically set to **inactive**.
+- The owner is notified: "this rule is producing too many findings, please review the threshold".
+
+This protects reviewers and storage from a single misbehaving rule, and complements the per-rule
+daily ceilings and auto-suppression in **Border-Security Constraints and Pre-Funding Conditions**.

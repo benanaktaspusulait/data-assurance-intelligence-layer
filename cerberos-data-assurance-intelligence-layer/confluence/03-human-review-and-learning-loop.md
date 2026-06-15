@@ -30,6 +30,11 @@ A finding screen should show:
 - Suggested root cause.
 - Recommended action.
 
+When many similar findings exist (same rule, source, and time window), the UI should present a single
+**cluster card** rather than one row per finding, showing total affected count, time range, trend, and
+first/last occurrence. A decision taken on the cluster applies to all member findings at once. Cluster
+behaviour is defined in **Governance, Security, and Scale**.
+
 ## Structured Feedback
 
 The decision panel should allow:
@@ -168,6 +173,24 @@ This closes the loop twice: once on the data quality finding, and once on the su
 time the platform can tell which suggestion types are reliable, which need more evidence, and which
 should be suppressed. A worked accept/reject/edit example is in the child page
 **Rule Types, Data Model, and Examples**.
+
+When the agent layer is introduced (subject to the 12-month accreditation freeze in
+**Border-Security Constraints and Pre-Funding Conditions**), suggestions move through an explicit
+state machine, never auto-deploying:
+
+```text
+Finding
+  -> [optional AI summarisation]
+  -> human review
+       - Accept   -> add as proposed rule change -> 2PR + 7-day shadow + canary
+       - Reject   -> structured reason fed back to the agent (why the suggestion was poor)
+       - Edit     -> corrected suggestion -> human approval again
+       - Downgrade / Escalate -> adjust severity, re-route
+```
+
+Every rejected suggestion stores a structured reason (for example `wrong_owner`, `wrong_severity`,
+`insufficient_evidence`) - the same reason-code vocabulary used for finding feedback - so the agent's
+suggestion quality can be measured and improved over time, not just the underlying findings.
 
 ## Key Principle
 

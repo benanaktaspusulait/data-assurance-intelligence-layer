@@ -96,6 +96,7 @@ Required features:
 - Error isolation.
 - Query explain/validation where possible.
 - Execution metadata capture.
+- Circuit breaker per data source (fail fast when a source's error rate is high; see **Logging, Observability, and Monitoring**).
 
 | Option | Strengths | Concerns | Recommendation |
 | --- | --- | --- | --- |

@@ -180,6 +180,26 @@ where window_start = :window_start
 
 Historical baselines and cross-system consistency checks are often better suited to S3/Parquet/Athena than replica DBs, provided queries are partition-aware, bounded, audited, and cost-controlled.
 
+## 9. Source Health Checks
+
+Some problems are not data-quality issues in the data itself, but failures of the **source or the
+assurance platform's access to it**. These should be detected and routed separately so they do not
+pollute data-quality review queues.
+
+Examples:
+
+- Replica lag greater than 5 minutes.
+- Athena workgroup throttling occurred 3 or more times in the last hour.
+- An S3 partition has not been updated within its expected window.
+- A connector is unhealthy or its circuit breaker is open (see **Logging, Observability, and Monitoring**).
+
+Source Health findings should be:
+
+- Kept in a separate category and review surface from data-quality findings (a different UI tab, a
+  different approval path).
+- Routed to the operations/platform team, not to domain SMEs.
+- Treated as a natural extension of "monitoring the monitor".
+
 ## Conceptual Data Model
 
 ### dq_rule
@@ -203,6 +223,15 @@ Historical baselines and cross-system consistency checks are often better suited
 - `approved_by`
 - `created_at`
 - `updated_at`
+- `complexity_score`
+- `value_score`
+- `max_findings_per_month`
+
+`complexity_score` (1-10) is derived from rule shape (partition filter present, number of joined
+tables, number of functions). It is used to prioritise rule review and to flag high-complexity,
+low-value rules for rewrite. `value_score` and `max_findings_per_month` support rule-value scoring and
+the monthly finding quota described in **Supporting Technical Detail** and
+**Governance, Security, and Scale**.
 
 ### dq_rule_run
 
@@ -330,6 +359,12 @@ Historical baselines and cross-system consistency checks are often better suited
 - `detail`
 - `correlation_id`
 - `created_at`
+- `row_hash`
+- `prev_hash`
+
+The `prev_hash`/`row_hash` columns form a tamper-evident hash chain (each row hashes the previous
+row's hash); a periodic signed digest of the chain is stored separately, per
+**Governance, Security, and Scale**.
 
 This conceptual data model is the authoritative table set for the discovery concept. Other pages
 (such as **Technology Selection and Architecture Decision Report** and the ER diagram in
@@ -386,6 +421,7 @@ threshold:
 result_limits:
   max_rows: 1000
   timeout_seconds: 60
+  max_findings_per_month: 10000
 evidence:
   sample_mode: masked
   max_samples: 20

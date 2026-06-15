@@ -166,6 +166,23 @@ Each trace should carry a `correlation_id` (typically the `rule_run_id`) so that
 | Learning engine stale (no output for 7 days) | Low | Dashboard flag |
 | Notification delivery failure rate > 10% | Medium | Alert notification owner |
 
+### Circuit Breaker
+
+Health checks detect problems; a circuit breaker contains them. Each connector and the
+`SafeQueryExecutor` should implement the circuit-breaker pattern so a failing or exhausted data source
+does not cause a backlog of retrying rule runs.
+
+- If the error rate exceeds 50% over the last 5 minutes, the circuit **opens**.
+- While open, rule executions against that source fail fast (marked failed immediately with an alert)
+  instead of queuing - this prevents a thundering-herd / pile-up effect.
+- After 1 minute the circuit moves to **half-open** and allows a single test query; if it succeeds the
+  circuit **closes**, otherwise it re-opens.
+- Circuit state transitions are logged (Connector Health category) and surfaced on the operations
+  dashboard.
+
+This is particularly important when Athena workgroups throttle or a replica connection pool is
+exhausted, allowing the platform to protect itself and recover automatically.
+
 ## Dashboards
 
 ### Platform Operations Dashboard

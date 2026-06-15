@@ -47,6 +47,22 @@ Candidate PoC rules:
 4. Broken journey-person reference.
 5. Inbound versus processed reconciliation.
 
+### Worked PoC Example (Concrete)
+
+A concrete instantiation of the scope above, to accelerate discovery:
+
+- **Domain:** Journey Processing.
+- **Source:** `CarrierGateway-A` read replica (independent of live traffic).
+- **Five rules:**
+  1. **Completeness:** `nationality` missing in more than 1% of inbound journey events in the last 15 minutes.
+  2. **Freshness:** no events received from `CarrierGateway-A` in the last 5 minutes.
+  3. **Referential integrity:** a `journey_event` whose `journey_id` is absent from the `journey` table.
+  4. **Reconciliation (replica-DB version):** more than 0.5% difference between events received and events reaching `processed` status in the last hour.
+  5. **Anomaly (simple):** hourly volume per source more than 3 standard deviations below the trailing 7-day average.
+
+These rules are simple, meaningful, and produce data-backed feedback immediately. They map onto the
+canonical categories in **Rule Types, Data Model, and Examples**.
+
 ## Success Criteria
 
 - Known issue detected.

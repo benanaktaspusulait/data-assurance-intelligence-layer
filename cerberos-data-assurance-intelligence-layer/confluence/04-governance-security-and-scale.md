@@ -14,11 +14,13 @@ Principles:
 - Findings reference the exact rule version that generated them.
 - Rule changes require human approval.
 - Backtesting should be performed before deployment where data is available.
+- Rule activation is staged: shadow, then canary (narrow slice), then full deployment, with automatic rollback if the false-positive rate exceeds an agreed threshold shortly after activation.
 - Rollback should be possible.
 - Exceptions are explicit, approved, versioned, and reviewed.
 - Rule owners are accountable for rule intent and quality.
 - Learning produces suggestions, not automatic changes.
 - Audit trails cover rule creation, execution, feedback, suggestions, approval, and deployment.
+- Audit records are tamper-evident: each audit entry stores the hash of the previous entry (a hash chain), and a periodic (for example daily) chain digest is stored separately in an immutable, signed location (for example a KMS-signed S3 object). This allows log integrity to be proven mathematically, which is appropriate for a high-audit border-security context.
 
 ## Indicative RACI for Discovery
 
@@ -148,6 +150,7 @@ Recommended approaches:
 - Result row limits.
 - Scheduling windows.
 - Separation from production workload.
+- Per-rule monthly finding quota with automatic deactivation when exceeded (see **Supporting Technical Detail**).
 
 Rules should be designed to work against replicas or analytical datasets, not operational production databases.
 
@@ -167,6 +170,21 @@ Detailed guidance is captured in **S3, Parquet, Glue Data Catalog and Athena Ana
 Alerting should include deduplication, grouping, cooldown periods, owner-based routing, and integration with Jira, ServiceNow, Teams, or Email.
 
 Repeated findings should update an existing incident where appropriate rather than creating unnecessary duplicates.
+
+## Finding Clustering
+
+Deduplication and grouping are necessary but not sufficient at platform scale. At approximately 5
+billion events/month, even a 0.1% anomaly rate implies millions of raw findings. Smart clustering
+keeps review load sustainable.
+
+- Findings from the same rule, same source, and same time window are collapsed into a single
+  **representative finding** (a cluster), not shown individually.
+- The cluster card shows: total affected record count, time range, trend (increasing, decreasing, or
+  steady), and first and last occurrence.
+- A reviewer decision (confirm, reject, exception) applies to the **whole cluster** at once, not to
+  each member finding.
+- Clustering complements auto-suppression and the per-rule finding caps described in
+  **Border-Security Constraints and Pre-Funding Conditions**.
 
 ## Dashboard Views
 

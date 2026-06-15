@@ -439,6 +439,11 @@ A finding screen should show:
 - Suggested root cause.
 - Recommended action.
 
+When many similar findings exist (same rule, source, and time window), the UI should present a single
+**cluster card** rather than one row per finding, showing total affected count, time range, trend, and
+first/last occurrence. A decision taken on the cluster applies to all member findings at once. Cluster
+behaviour is defined in **Governance, Security, and Scale**.
+
 ## Structured Feedback
 
 The decision panel should allow:
@@ -578,6 +583,24 @@ time the platform can tell which suggestion types are reliable, which need more 
 should be suppressed. A worked accept/reject/edit example is in the child page
 **Rule Types, Data Model, and Examples**.
 
+When the agent layer is introduced (subject to the 12-month accreditation freeze in
+**Border-Security Constraints and Pre-Funding Conditions**), suggestions move through an explicit
+state machine, never auto-deploying:
+
+```text
+Finding
+  -> [optional AI summarisation]
+  -> human review
+       - Accept   -> add as proposed rule change -> 2PR + 7-day shadow + canary
+       - Reject   -> structured reason fed back to the agent (why the suggestion was poor)
+       - Edit     -> corrected suggestion -> human approval again
+       - Downgrade / Escalate -> adjust severity, re-route
+```
+
+Every rejected suggestion stores a structured reason (for example `wrong_owner`, `wrong_severity`,
+`insufficient_evidence`) - the same reason-code vocabulary used for finding feedback - so the agent's
+suggestion quality can be measured and improved over time, not just the underlying findings.
+
 ## Key Principle
 
 This follows the safe operating model defined on the parent page
@@ -605,11 +628,13 @@ Principles:
 - Findings reference the exact rule version that generated them.
 - Rule changes require human approval.
 - Backtesting should be performed before deployment where data is available.
+- Rule activation is staged: shadow, then canary (narrow slice), then full deployment, with automatic rollback if the false-positive rate exceeds an agreed threshold shortly after activation.
 - Rollback should be possible.
 - Exceptions are explicit, approved, versioned, and reviewed.
 - Rule owners are accountable for rule intent and quality.
 - Learning produces suggestions, not automatic changes.
 - Audit trails cover rule creation, execution, feedback, suggestions, approval, and deployment.
+- Audit records are tamper-evident: each audit entry stores the hash of the previous entry (a hash chain), and a periodic (for example daily) chain digest is stored separately in an immutable, signed location (for example a KMS-signed S3 object). This allows log integrity to be proven mathematically, which is appropriate for a high-audit border-security context.
 
 ## Indicative RACI for Discovery
 
@@ -739,6 +764,7 @@ Recommended approaches:
 - Result row limits.
 - Scheduling windows.
 - Separation from production workload.
+- Per-rule monthly finding quota with automatic deactivation when exceeded (see **Supporting Technical Detail**).
 
 Rules should be designed to work against replicas or analytical datasets, not operational production databases.
 
@@ -758,6 +784,21 @@ Detailed guidance is captured in **S3, Parquet, Glue Data Catalog and Athena Ana
 Alerting should include deduplication, grouping, cooldown periods, owner-based routing, and integration with Jira, ServiceNow, Teams, or Email.
 
 Repeated findings should update an existing incident where appropriate rather than creating unnecessary duplicates.
+
+## Finding Clustering
+
+Deduplication and grouping are necessary but not sufficient at platform scale. At approximately 5
+billion events/month, even a 0.1% anomaly rate implies millions of raw findings. Smart clustering
+keeps review load sustainable.
+
+- Findings from the same rule, same source, and same time window are collapsed into a single
+  **representative finding** (a cluster), not shown individually.
+- The cluster card shows: total affected record count, time range, trend (increasing, decreasing, or
+  steady), and first and last occurrence.
+- A reviewer decision (confirm, reject, exception) applies to the **whole cluster** at once, not to
+  each member finding.
+- Clustering complements auto-suppression and the per-rule finding caps described in
+  **Border-Security Constraints and Pre-Funding Conditions**.
 
 ## Dashboard Views
 
@@ -834,6 +875,22 @@ Candidate PoC rules:
 3. Duplicate external reference.
 4. Broken journey-person reference.
 5. Inbound versus processed reconciliation.
+
+### Worked PoC Example (Concrete)
+
+A concrete instantiation of the scope above, to accelerate discovery:
+
+- **Domain:** Journey Processing.
+- **Source:** `CarrierGateway-A` read replica (independent of live traffic).
+- **Five rules:**
+  1. **Completeness:** `nationality` missing in more than 1% of inbound journey events in the last 15 minutes.
+  2. **Freshness:** no events received from `CarrierGateway-A` in the last 5 minutes.
+  3. **Referential integrity:** a `journey_event` whose `journey_id` is absent from the `journey` table.
+  4. **Reconciliation (replica-DB version):** more than 0.5% difference between events received and events reaching `processed` status in the last hour.
+  5. **Anomaly (simple):** hourly volume per source more than 3 standard deviations below the trailing 7-day average.
+
+These rules are simple, meaningful, and produce data-backed feedback immediately. They map onto the
+canonical categories in **Rule Types, Data Model, and Examples**.
 
 ## Success Criteria
 
@@ -1230,6 +1287,26 @@ where window_start = :window_start
 
 Historical baselines and cross-system consistency checks are often better suited to S3/Parquet/Athena than replica DBs, provided queries are partition-aware, bounded, audited, and cost-controlled.
 
+## 9. Source Health Checks
+
+Some problems are not data-quality issues in the data itself, but failures of the **source or the
+assurance platform's access to it**. These should be detected and routed separately so they do not
+pollute data-quality review queues.
+
+Examples:
+
+- Replica lag greater than 5 minutes.
+- Athena workgroup throttling occurred 3 or more times in the last hour.
+- An S3 partition has not been updated within its expected window.
+- A connector is unhealthy or its circuit breaker is open (see **Logging, Observability, and Monitoring**).
+
+Source Health findings should be:
+
+- Kept in a separate category and review surface from data-quality findings (a different UI tab, a
+  different approval path).
+- Routed to the operations/platform team, not to domain SMEs.
+- Treated as a natural extension of "monitoring the monitor".
+
 ## Conceptual Data Model
 
 ### dq_rule
@@ -1253,6 +1330,15 @@ Historical baselines and cross-system consistency checks are often better suited
 - `approved_by`
 - `created_at`
 - `updated_at`
+- `complexity_score`
+- `value_score`
+- `max_findings_per_month`
+
+`complexity_score` (1-10) is derived from rule shape (partition filter present, number of joined
+tables, number of functions). It is used to prioritise rule review and to flag high-complexity,
+low-value rules for rewrite. `value_score` and `max_findings_per_month` support rule-value scoring and
+the monthly finding quota described in **Supporting Technical Detail** and
+**Governance, Security, and Scale**.
 
 ### dq_rule_run
 
@@ -1380,6 +1466,12 @@ Historical baselines and cross-system consistency checks are often better suited
 - `detail`
 - `correlation_id`
 - `created_at`
+- `row_hash`
+- `prev_hash`
+
+The `prev_hash`/`row_hash` columns form a tamper-evident hash chain (each row hashes the previous
+row's hash); a periodic signed digest of the chain is stored separately, per
+**Governance, Security, and Scale**.
 
 This conceptual data model is the authoritative table set for the discovery concept. Other pages
 (such as **Technology Selection and Architecture Decision Report** and the ER diagram in
@@ -1436,6 +1528,7 @@ threshold:
 result_limits:
   max_rows: 1000
   timeout_seconds: 60
+  max_findings_per_month: 10000
 evidence:
   sample_mode: masked
   max_samples: 20
@@ -1701,6 +1794,23 @@ Each trace should carry a `correlation_id` (typically the `rule_run_id`) so that
 | Finding store write failures | Critical | Page on-call, halt new executions |
 | Learning engine stale (no output for 7 days) | Low | Dashboard flag |
 | Notification delivery failure rate > 10% | Medium | Alert notification owner |
+
+### Circuit Breaker
+
+Health checks detect problems; a circuit breaker contains them. Each connector and the
+`SafeQueryExecutor` should implement the circuit-breaker pattern so a failing or exhausted data source
+does not cause a backlog of retrying rule runs.
+
+- If the error rate exceeds 50% over the last 5 minutes, the circuit **opens**.
+- While open, rule executions against that source fail fast (marked failed immediately with an alert)
+  instead of queuing - this prevents a thundering-herd / pile-up effect.
+- After 1 minute the circuit moves to **half-open** and allows a single test query; if it succeeds the
+  circuit **closes**, otherwise it re-opens.
+- Circuit state transitions are logged (Connector Health category) and surfaced on the operations
+  dashboard.
+
+This is particularly important when Athena workgroups throttle or a replica connection pool is
+exhausted, allowing the platform to protect itself and recover automatically.
 
 ## Dashboards
 
@@ -2446,6 +2556,7 @@ Required features:
 - Error isolation.
 - Query explain/validation where possible.
 - Execution metadata capture.
+- Circuit breaker per data source (fail fast when a source's error rate is high; see **Logging, Observability, and Monitoring**).
 
 | Option | Strengths | Concerns | Recommendation |
 | --- | --- | --- | --- |
@@ -3556,7 +3667,8 @@ canonical flat rule format used across the discovery pack (for example the rule 
       "additionalProperties": false,
       "properties": {
         "max_rows": { "type": "integer", "maximum": 10000 },
-        "timeout_seconds": { "type": "integer", "maximum": 120 }
+        "timeout_seconds": { "type": "integer", "maximum": 120 },
+        "max_findings_per_month": { "type": "integer", "minimum": 1 }
       }
     },
     "evidence": {
@@ -3715,7 +3827,32 @@ Interpretation:
 
 The score is recalculated by a scheduled job and stored on `dq_feedback_pattern`. It is an input to triage, never an automatic action.
 
-## 6. Backtesting Methodology
+## 6. Adaptive Threshold Calculation (Deterministic)
+
+Static thresholds drift out of date as volumes change, producing either false-positive spikes or
+missed issues. Thresholds can adapt without any machine learning, using a transparent, auditable
+rolling statistic per rule (or per rule + source + event-type segment).
+
+Over a rolling 7-day window of confirmed findings:
+
+```text
+mean   = average confirmed-finding count for the segment
+stddev = standard deviation of that count
+adaptive_threshold = max(mean + 2 * stddev, configured_static_threshold)
+```
+
+Behaviour:
+
+- Recalculated weekly by a scheduled job and stored alongside the rule version.
+- The adaptive value never goes below the rule's configured static threshold (a safety floor).
+- When the threshold changes, the rule owner is notified ("threshold auto-updated from X to Y"). If the
+  owner does not accept it, the previous threshold remains in force.
+- The calculation is deterministic and fully explainable, so it is suitable for audit and governance.
+
+This adapts to sudden volume changes and reduces false positives automatically while keeping a human
+owner in control of every change.
+
+## 7. Backtesting Methodology
 
 Before any suggested rule refinement is deployed, it is backtested against historical data:
 
@@ -3733,7 +3870,22 @@ Before any suggested rule refinement is deployed, it is backtested against histo
 
 Shadow mode is mandatory: a candidate rule must never write to the live findings store or trigger notifications during backtesting.
 
-## 7. Notification Templates
+### Deployment Progression: Shadow -> Canary -> Full
+
+A rule that passes backtesting is not switched straight to full production. It moves through staged
+activation so that any surprise is contained:
+
+1. **Shadow (7 days):** runs against live data with no findings written and no alerts (backtesting/validation).
+2. **Canary (1-2 days):** activated for a narrow slice only - for example a single source system, or
+   low-risk hours - with live findings and alerts but limited blast radius.
+3. **Full:** activated across the domain only after the canary produces no false-positive spike.
+
+Automatic rollback conditions are defined per rule and evaluated continuously after activation. A
+typical condition: if the false-positive rate exceeds 5% within 2 hours of activation (canary or full),
+the rule automatically reverts to the previous approved version and the owner is notified. Rollback
+uses the existing rule versioning; the previous version always remains deployable.
+
+## 8. Notification Templates
 
 ### Teams / Slack (High or Critical)
 
@@ -3779,7 +3931,7 @@ Labels: cerberos, data-assurance, {domain}
 
 All templates use masked references only. Raw PII must never appear in a notification.
 
-## 8. Agent Prompt Template and Guardrails
+## 9. Agent Prompt Template and Guardrails
 
 When the optional `AgentAnalysisService` is enabled, the agent receives only structured, masked context.
 
@@ -3824,7 +3976,7 @@ Guardrails enforced outside the model:
 - Prompt and response are written to the audit log.
 - The agent endpoint must be an approved enterprise LLM gateway.
 
-## 9. Integration Test Scenarios (PoC)
+## 10. Integration Test Scenarios (PoC)
 
 | # | Scenario | Expected result |
 | --- | --- | --- |
@@ -3839,7 +3991,7 @@ Guardrails enforced outside the model:
 | 9 | Suggested refinement backtested | Backtest report produced; no writes to live findings store |
 | 10 | Finding evidence requested | Only masked samples returned; raw PII never exposed |
 
-## 10. Data Quality Tooling Comparison
+## 11. Data Quality Tooling Comparison
 
 A focused comparison for the "build vs reuse" decision deferred in the main report.
 
@@ -3860,6 +4012,41 @@ custom platform up front.
 ## Glossary
 
 The shared terminology for this discovery pack is maintained on its own page: **Glossary**.
+
+## 12. Rule Complexity, Value, and Finding Quota
+
+These deterministic metrics keep the rule set sustainable as it grows from five rules toward hundreds.
+
+### Complexity Score
+
+Each rule is assigned a complexity score (1-10) derived from its shape:
+
+- Partition filter present (lower complexity if yes).
+- Number of joined tables.
+- Number of functions/expressions used.
+
+The score is used to prioritise rule review and cost optimisation. High-complexity, low-value rules
+are placed on a "rewrite recommended" list. The learning engine can suggest simpler rewrites of
+similar rules using a rule-based (non-ML) approach.
+
+### Rule Value Score
+
+```text
+value_score = (confirmed_findings * severity_weight) / (execution_cost + review_time)
+```
+
+Low value-score rules are surfaced for owner review and possible retirement, so effort and cost stay
+focused on rules that produce actionable assurance.
+
+### Monthly Finding Quota
+
+Each rule has a maximum monthly finding quota (for example 10,000). When the quota is reached:
+
+- The rule is automatically set to **inactive**.
+- The owner is notified: "this rule is producing too many findings, please review the threshold".
+
+This protects reviewers and storage from a single misbehaving rule, and complements the per-rule
+daily ceilings and auto-suppression in **Border-Security Constraints and Pre-Funding Conditions**.
 
 ---
 # Glossary
