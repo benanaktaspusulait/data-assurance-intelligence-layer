@@ -4,7 +4,7 @@
 **Audience:** Architecture, platform, engineering management, delivery, and data governance stakeholders  
 **Purpose:** Initial discovery discussion, not a final implementation proposal
 
-This Confluence set is structured as one parent page plus 20 child pages (21 sections in total: this parent page followed by 20 child pages).
+This Confluence set is structured as one parent page plus 22 child pages (23 sections in total: this parent page followed by 22 child pages).
 
 ## Summary
 
@@ -89,13 +89,15 @@ This discovery concept is split into the following child pages:
 11. Open Decisions and Discovery Questions
 12. Technology Selection and Architecture Decision Report
 13. Component Technology Choices
-14. Architecture Decision Records and Reference Architecture
-15. Architecture Decision Summary
-16. Executive Discovery Proposal
-17. Supporting Technical Detail
-18. Glossary
-19. S3, Parquet, Glue Data Catalog and Athena Analytical Assurance Layer
-20. Athena Analytical DQ Examples and Sub-Architectures
+14. Component Technology Choices - Platform Services
+15. Architecture Decision Records and Reference Architecture
+16. Architecture Decision Summary
+17. Executive Discovery Proposal
+18. Supporting Technical Detail
+19. Supporting Technical Detail - Operational Artefacts
+20. Glossary
+21. S3, Parquet, Glue Data Catalog and Athena Analytical Assurance Layer
+22. Athena Analytical DQ Examples and Sub-Architectures
 
 ## Suggested Reading Paths
 
@@ -120,9 +122,11 @@ For technical implementation review (only if an implementation approach is reque
 
 - Technology Selection and Architecture Decision Report
 - Component Technology Choices
+- Component Technology Choices - Platform Services
 - Architecture Decision Records and Reference Architecture
 - Rule Types, Data Model, and Examples
 - Supporting Technical Detail
+- Supporting Technical Detail - Operational Artefacts
 - Athena Analytical DQ Examples and Sub-Architectures
 - Logging, Observability, and Monitoring
 - JVM Agent Framework Options
