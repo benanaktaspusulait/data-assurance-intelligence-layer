@@ -240,7 +240,8 @@ canonical flat rule format used across the discovery pack (for example the rule 
         "approved_by": { "type": "string" },
         "requires_masking": { "type": "boolean" },
         "allow_raw_samples": { "type": "boolean", "const": false },
-        "requires_human_approval": { "type": "boolean" }
+        "requires_human_approval": { "type": "boolean" },
+        "targets_protected_attributes": { "type": "boolean" }
       }
     }
   }
@@ -257,6 +258,7 @@ Notes:
 - `max_rows` and `timeout_seconds` are capped to keep cost and load bounded.
 - `additionalProperties: false` at every level keeps rule files tightly constrained; new fields must be added to the schema deliberately.
 - The optional `classification` block lets each rule declare its maximum input and output data classification, aligned to the **Governance, Security, and Scale** data classification model. It is the machine-readable form of "each rule and finding should declare the maximum classification it may access and output".
+- `governance.targets_protected_attributes` flags rules keyed on protected attributes (for example nationality cohorts). When `true`, the rule must not be deployed without explicit governance sign-off, per **Border-Security Constraints and Pre-Funding Conditions**.
 
 ## 3. Rule Execution Sequence
 

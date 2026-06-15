@@ -84,6 +84,13 @@ Potential PoC measures:
 | Sensitive data exposure | Use masked samples, evidence hashes, output minimisation, and RBAC. |
 | Organisational resistance | Mature privately and frame as discovery rather than criticism. |
 | Scope becoming too large | Keep PoC narrow and defer advanced intelligence. |
+| False-positive avalanche at scale | Per-rule daily finding ceilings, auto-suppression, adaptive thresholds, Critical/High-only human-in-the-loop. |
+| No funded 7x24 reviewers | Funded tiered triage and on-call rota; without it, no real-time use of agent or analytical output. |
+| Agent legal/compliance exposure | DPIA before any agent; treat masked findings as personal data; agent-output audit zone; supervisor review within 24h. |
+| Unaccredited AI framework | 12-month freeze on agent-framework selection; deterministic feedback only until accreditation evidence exists. |
+| Diplomatically sensitive rule | Two-person approval, 7-day live shadow, and prohibition on protected-attribute rules without governance sign-off. |
+
+The full OFFICIAL-SENSITIVE constraints, red/amber/green assessment, and the conditions that must be met before funding are captured in the child page **Border-Security Constraints and Pre-Funding Conditions**.
 
 ## Phased Roadmap
 

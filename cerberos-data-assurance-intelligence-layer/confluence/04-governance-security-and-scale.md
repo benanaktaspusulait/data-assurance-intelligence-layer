@@ -62,6 +62,27 @@ Agent safety:
 
 > Agents analyse controlled findings, structured metadata, masked evidence, and governed context. They do not receive unrestricted raw sensitive data or direct production database access.
 
+## Border-Security Legal and AI Controls
+
+This capability operates in an OFFICIAL-SENSITIVE border-security context. The following controls are
+mandatory and are expanded in the child page **Border-Security Constraints and Pre-Funding Conditions**.
+
+- **Masked data is still personal data.** Under UK GDPR and the Data Protection Act 2018, masked or
+  pseudonymised findings remain personal data; only genuinely anonymised data is out of scope. A Data
+  Protection Impact Assessment (DPIA) must be completed and signed before any agent processing.
+- **Agent output is sensitive.** Agent prompts and responses can generate sensitive inferences. They
+  must be classified and stored in a separate, access-controlled audit zone, and be reviewable by a
+  human supervisor within 24 hours.
+- **No PII to agents without authorisation.** Agents receive masked, bounded findings only. Raw or
+  masked PII must not be provided to an agent without case-level authorisation.
+- **Two-person rule for rule changes.** No rule change (including agent-suggested refinements) may be
+  deployed without two-person (2PR) approval, after a mandatory 7-day live shadow window with no alerts.
+- **Protected-attribute prohibition.** Rules keyed on protected attributes (for example nationality
+  cohorts) must not be created or deployed without explicit governance sign-off, given the diplomatic
+  and equality risks. Rule definitions declare this via the governance metadata.
+- **Bounded findings.** Per-rule daily finding ceilings and auto-suppression are required so that
+  review load stays sustainable at platform scale.
+
 ## Data Classification Model
 
 Each rule and finding should declare the maximum data classification it may access and the maximum classification it may output.

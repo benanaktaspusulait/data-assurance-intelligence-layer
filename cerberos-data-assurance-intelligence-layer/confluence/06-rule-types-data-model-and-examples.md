@@ -411,6 +411,7 @@ governance:
   requires_masking: true
   allow_raw_samples: false
   requires_human_approval: true
+  targets_protected_attributes: false
 ```
 
 ## Candidate Rule Suggested by Learning Engine

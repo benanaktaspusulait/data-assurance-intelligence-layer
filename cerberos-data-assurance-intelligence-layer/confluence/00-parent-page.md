@@ -4,7 +4,7 @@
 **Audience:** Architecture, platform, engineering management, delivery, and data governance stakeholders  
 **Purpose:** Initial discovery discussion, not a final implementation proposal
 
-This Confluence set is structured as one parent page plus 18 child pages (19 sections in total: this parent page followed by 18 child pages).
+This Confluence set is structured as one parent page plus 19 child pages (20 sections in total: this parent page followed by 19 child pages).
 
 ## Summary
 
@@ -81,19 +81,20 @@ This discovery concept is split into the following child pages:
 3. Human Review and Learning Loop
 4. Governance, Security, and Scale
 5. PoC, Roadmap, and Risks
-6. Rule Types, Data Model, and Examples
-7. Logging, Observability, and Monitoring
-8. JVM Agent Framework Options
-9. Open Decisions and Discovery Questions
-10. Technology Selection and Architecture Decision Report
-11. Component Technology Choices
-12. Architecture Decision Records and Reference Architecture
-13. Architecture Decision Summary
-14. Executive Discovery Proposal
-15. Supporting Technical Detail
-16. Glossary
-17. S3, Parquet, Glue Data Catalog and Athena Analytical Assurance Layer
-18. Athena Analytical DQ Examples and Sub-Architectures
+6. Border-Security Constraints and Pre-Funding Conditions
+7. Rule Types, Data Model, and Examples
+8. Logging, Observability, and Monitoring
+9. JVM Agent Framework Options
+10. Open Decisions and Discovery Questions
+11. Technology Selection and Architecture Decision Report
+12. Component Technology Choices
+13. Architecture Decision Records and Reference Architecture
+14. Architecture Decision Summary
+15. Executive Discovery Proposal
+16. Supporting Technical Detail
+17. Glossary
+18. S3, Parquet, Glue Data Catalog and Athena Analytical Assurance Layer
+19. Athena Analytical DQ Examples and Sub-Architectures
 
 ## Suggested Reading Paths
 
@@ -106,6 +107,7 @@ For senior stakeholders (first share):
 - Initial Discovery Concept (this page)
 - Context and Problem
 - PoC, Roadmap, and Risks
+- Border-Security Constraints and Pre-Funding Conditions
 
 For architecture review (if interest is confirmed):
 
