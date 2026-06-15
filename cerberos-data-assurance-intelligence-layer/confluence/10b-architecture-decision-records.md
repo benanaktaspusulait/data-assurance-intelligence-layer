@@ -18,6 +18,8 @@
 | Findings store | DynamoDB | Serverless scale. | Less natural for workflow analytics. | Medium | Conditional | Defer. |
 | Query execution | SafeQueryExecutor + JDBC/Athena SDK | Central governance and source flexibility. | Custom implementation needed. | High | High | Primary. |
 | Query execution | ORM/JPA | Familiar app data access. | Poor fit for governed DQ queries. | Low | Low | Avoid. |
+| Query execution | Hibernate Native SQL | Reuses Hibernate connection/session infrastructure if already standard. | Still needs external guardrails and does not fit Athena or multi-source execution well. | Medium only behind SafeQueryExecutor | Conditional | Limited use only. |
+| Query execution | Hibernate Reactive | Non-blocking access for reactive services where supported. | Does not solve query governance, has limited source coverage, and adds complexity for scheduled checks. | Low/Medium if reactive standard | Conditional | Defer. |
 | UI | React/internal UI | Flexible, fast, familiar. | Requires UI ownership. | High | High | Primary unless standard differs. |
 | Scheduler | In-service/Kubernetes CronJob | Simple. | Limited workflow capability. | High | Medium | PoC. |
 | Scheduler | Step Functions/Airflow/Dagster | Strong orchestration. | More complexity. | Medium | High for complex DAGs | Later. |
@@ -74,7 +76,7 @@ Decision: All rule queries must go through `SafeQueryExecutor`.
 
 Consequences: Governance controls are centralised. The executor becomes a critical component requiring strong tests.
 
-Alternatives considered: direct JDBC, ORM/JPA, direct Athena calls from rules.
+Alternatives considered: direct JDBC, ORM/JPA, Hibernate Native SQL, Hibernate Reactive, direct Athena calls from rules.
 
 ### ADR-005: Use read-only replica and analytical sources only
 

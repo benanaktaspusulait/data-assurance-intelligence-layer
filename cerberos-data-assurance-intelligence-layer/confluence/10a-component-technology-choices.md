@@ -102,10 +102,19 @@ Required features:
 | Direct JDBC | Simple, mature, portable for replica DBs. | Easy to misuse without a wrapper. | Use only behind `SafeQueryExecutor`. |
 | jOOQ | Type-safe SQL building, good control over SQL. | Adds library complexity; generated schema may be awkward for multiple sources. | Useful for controlled SQL and metadata queries. |
 | Hibernate/JPA | Familiar ORM for application data. | Poor fit for arbitrary aggregate DQ queries and query guardrails. | Avoid for rule execution. |
+| Hibernate Native SQL | Allows SQL execution through an existing Hibernate/EntityManager stack while reusing connection management and transactions. | Still tied to ORM/session semantics, weaker fit for cross-source execution, Athena, partition/cost controls, and query governance. Native SQL does not by itself solve masking, allow-listing, audit, or result bounding. | Acceptable only behind `SafeQueryExecutor` for fixed replica DB checks if Hibernate is already the platform standard. Not the core execution abstraction. |
+| Hibernate Reactive | Non-blocking database access for reactive JVM services where supported drivers and runtime are already standard. | Limited source coverage, no fit for Athena SDK, more complexity for scheduled/batch assurance jobs, and does not address query safety, masking, cost control, or audit. | Defer. Consider only if Cerberos is already reactive end-to-end and the source connector supports it, still behind `SafeQueryExecutor`. |
 | Apache Calcite | Query planning and SQL abstraction. | Likely overkill for PoC. | Consider only if multi-source SQL abstraction becomes necessary. |
 | Presto/Trino | Powerful distributed query engine. | Platform dependency and operational overhead. | Consider later if already available. |
 | Athena SDK | Native AWS path for S3/Parquet analytical checks. | Needs cost and timeout controls. | Recommended for Athena checks. |
 | Custom executor | Centralises governance. | Must be designed carefully. | Required abstraction. |
+
+Why Hibernate is not the default query execution technology:
+
+- The assurance layer is not primarily persisting application entities; it is running approved aggregate, reconciliation, freshness, schema drift, and backtesting checks.
+- Rules need source-aware controls across replica databases and Athena, not only ORM-managed relational tables.
+- Governance controls must live outside the ORM: approved templates, allow-listed sources, SELECT-only enforcement, row limits, masking, audit, and Athena scan controls.
+- Reactive database access improves a specific runtime model, but it does not reduce the need for query governance and may add complexity for scheduled PoC jobs.
 
 Interface example:
 

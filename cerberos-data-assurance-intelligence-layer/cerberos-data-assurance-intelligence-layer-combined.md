@@ -2091,7 +2091,7 @@ Technology choices should be evaluated against the security and operational cont
 | Rule Registry | Store approved rules, versions, owners, schedules, thresholds, and governance state. | Git-backed YAML initially, later PostgreSQL-backed registry. | JSON, Drools, OPA/Rego, custom DSL, Great Expectations/dbt style checks. | Git-backed YAML with review process. | Database-backed registry with approval workflow and audit. |
 | Rule Definition Format | Human-readable rule format. | YAML with schema validation. | JSON, DSL, SQL files, DQDL, Rego. | YAML plus JSON Schema validation. | YAML/DSL stored as versioned registry records. |
 | Scheduler / Orchestration | Trigger rules on schedule and manage backfill. | Quarkus/Spring scheduler or Kubernetes CronJob. | Quartz, EventBridge, Step Functions, Airflow, Dagster. | In-service scheduler or CronJob. | Enterprise scheduler/orchestrator depending on platform standards. |
-| Safe Query Execution Engine | Enforce query safety and execute approved checks. | Custom `SafeQueryExecutor` over JDBC/jOOQ and Athena SDK. | Direct JDBC, Apache Calcite, Trino/Presto, custom scripts. | Custom executor with JDBC connector. | Multi-connector executor with cost, concurrency, masking, and audit controls. |
+| Safe Query Execution Engine | Enforce query safety and execute approved checks. | Custom `SafeQueryExecutor` over JDBC/jOOQ and Athena SDK. | Direct JDBC, Hibernate Native SQL, Hibernate Reactive, Apache Calcite, Trino/Presto, custom scripts. | Custom executor with JDBC connector. | Multi-connector executor with cost, concurrency, masking, and audit controls. |
 | Source Connectors | Isolate access to replica DBs, Athena/S3, metrics, and reporting datasets. | Connector interface per source type. | Direct SQL from rule code, ETL job integration, DQ tool connectors. | One read-only replica connector and optional Athena connector. | Governed connector library with health checks and source metadata. |
 | Findings Store | Persist findings and lifecycle state. | PostgreSQL. | DynamoDB, OpenSearch, S3, graph DB. | PostgreSQL. | PostgreSQL plus OpenSearch for search/analytics and S3 archival if required. |
 | Feedback Store | Capture structured review decisions and corrections. | PostgreSQL. | DynamoDB, event store, ticketing system only. | PostgreSQL. | PostgreSQL with audit events and analytics views. |
@@ -2340,10 +2340,19 @@ Required features:
 | Direct JDBC | Simple, mature, portable for replica DBs. | Easy to misuse without a wrapper. | Use only behind `SafeQueryExecutor`. |
 | jOOQ | Type-safe SQL building, good control over SQL. | Adds library complexity; generated schema may be awkward for multiple sources. | Useful for controlled SQL and metadata queries. |
 | Hibernate/JPA | Familiar ORM for application data. | Poor fit for arbitrary aggregate DQ queries and query guardrails. | Avoid for rule execution. |
+| Hibernate Native SQL | Allows SQL execution through an existing Hibernate/EntityManager stack while reusing connection management and transactions. | Still tied to ORM/session semantics, weaker fit for cross-source execution, Athena, partition/cost controls, and query governance. Native SQL does not by itself solve masking, allow-listing, audit, or result bounding. | Acceptable only behind `SafeQueryExecutor` for fixed replica DB checks if Hibernate is already the platform standard. Not the core execution abstraction. |
+| Hibernate Reactive | Non-blocking database access for reactive JVM services where supported drivers and runtime are already standard. | Limited source coverage, no fit for Athena SDK, more complexity for scheduled/batch assurance jobs, and does not address query safety, masking, cost control, or audit. | Defer. Consider only if Cerberos is already reactive end-to-end and the source connector supports it, still behind `SafeQueryExecutor`. |
 | Apache Calcite | Query planning and SQL abstraction. | Likely overkill for PoC. | Consider only if multi-source SQL abstraction becomes necessary. |
 | Presto/Trino | Powerful distributed query engine. | Platform dependency and operational overhead. | Consider later if already available. |
 | Athena SDK | Native AWS path for S3/Parquet analytical checks. | Needs cost and timeout controls. | Recommended for Athena checks. |
 | Custom executor | Centralises governance. | Must be designed carefully. | Required abstraction. |
+
+Why Hibernate is not the default query execution technology:
+
+- The assurance layer is not primarily persisting application entities; it is running approved aggregate, reconciliation, freshness, schema drift, and backtesting checks.
+- Rules need source-aware controls across replica databases and Athena, not only ORM-managed relational tables.
+- Governance controls must live outside the ORM: approved templates, allow-listed sources, SELECT-only enforcement, row limits, masking, audit, and Athena scan controls.
+- Reactive database access improves a specific runtime model, but it does not reduce the need for query governance and may add complexity for scheduled PoC jobs.
 
 Interface example:
 
@@ -2734,6 +2743,8 @@ Simple deployment diagram:
 | Findings store | DynamoDB | Serverless scale. | Less natural for workflow analytics. | Medium | Conditional | Defer. |
 | Query execution | SafeQueryExecutor + JDBC/Athena SDK | Central governance and source flexibility. | Custom implementation needed. | High | High | Primary. |
 | Query execution | ORM/JPA | Familiar app data access. | Poor fit for governed DQ queries. | Low | Low | Avoid. |
+| Query execution | Hibernate Native SQL | Reuses Hibernate connection/session infrastructure if already standard. | Still needs external guardrails and does not fit Athena or multi-source execution well. | Medium only behind SafeQueryExecutor | Conditional | Limited use only. |
+| Query execution | Hibernate Reactive | Non-blocking access for reactive services where supported. | Does not solve query governance, has limited source coverage, and adds complexity for scheduled checks. | Low/Medium if reactive standard | Conditional | Defer. |
 | UI | React/internal UI | Flexible, fast, familiar. | Requires UI ownership. | High | High | Primary unless standard differs. |
 | Scheduler | In-service/Kubernetes CronJob | Simple. | Limited workflow capability. | High | Medium | PoC. |
 | Scheduler | Step Functions/Airflow/Dagster | Strong orchestration. | More complexity. | Medium | High for complex DAGs | Later. |
@@ -2790,7 +2801,7 @@ Decision: All rule queries must go through `SafeQueryExecutor`.
 
 Consequences: Governance controls are centralised. The executor becomes a critical component requiring strong tests.
 
-Alternatives considered: direct JDBC, ORM/JPA, direct Athena calls from rules.
+Alternatives considered: direct JDBC, ORM/JPA, Hibernate Native SQL, Hibernate Reactive, direct Athena calls from rules.
 
 ### ADR-005: Use read-only replica and analytical sources only
 
