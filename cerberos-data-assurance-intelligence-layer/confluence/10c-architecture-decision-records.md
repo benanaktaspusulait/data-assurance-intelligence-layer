@@ -38,7 +38,7 @@ Context: Cerberos requires an enterprise-grade backend for rule execution, APIs,
 
 Decision: Use a JVM-based backend service. Java 21 + Quarkus is a candidate PoC option if it aligns with existing platform standards.
 
-Consequences: Strong fit for JDBC, AWS SDK, OpenTelemetry, containers, and enterprise maintainability. Team familiarity must be confirmed.
+Consequences: Strong fit for JDBC, AWS SDK, OpenTelemetry, containers, and enterprise maintainability. Team familiarity must be confirmed. For OFFICIAL-SENSITIVE accreditation familiarity, Spring Boot is the preferred default; Quarkus remains a candidate only where the team already uses it and accreditation is not blocked.
 
 Alternatives considered: Spring Boot, Kotlin/Ktor, Python FastAPI, Node.js/NestJS.
 

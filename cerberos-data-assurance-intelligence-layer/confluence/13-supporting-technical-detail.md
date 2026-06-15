@@ -260,6 +260,8 @@ Notes:
 - `additionalProperties: false` at every level keeps rule files tightly constrained; new fields must be added to the schema deliberately.
 - The optional `classification` block lets each rule declare its maximum input and output data classification, aligned to the **Governance, Security, and Scale** data classification model. It is the machine-readable form of "each rule and finding should declare the maximum classification it may access and output".
 - `governance.targets_protected_attributes` flags rules keyed on protected attributes (for example nationality cohorts). When `true`, the rule must not be deployed without explicit governance sign-off, per **Border-Security Constraints and Pre-Funding Conditions**.
+- `pii_level` describes the sensitivity the rule *touches*: `none` (no personal data), `masked_samples_only` (may surface masked sample evidence, no raw PII), or `sensitive` (queries sensitive columns internally but must still mask outputs). Prefer the least-privileged value that lets the rule work; `sensitive` does not permit raw PII in findings - output masking and the `classification` block still apply.
+- Schema evolution: rules are versioned, and new schema fields are added as **optional**, so existing rule files continue to validate. `additionalProperties: false` blocks unknown keys, so any genuinely new field must be added to the schema deliberately and rolled out with a schema version bump; old rule versions validate against the schema version they were authored under.
 
 ## 3. Rule Execution Sequence
 

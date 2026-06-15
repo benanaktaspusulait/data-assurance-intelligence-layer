@@ -10,6 +10,8 @@ The main architecture concept intentionally focuses on assurance, governance, hu
 
 This page compares realistic JVM-oriented options for the optional agent/Copilot-assisted layer. It should not be read as a final technology selection. The strategy for abstracting over several providers and switching between them under governance is covered in the child page **Multi-Provider Agent Framework Strategy**.
 
+> **Important:** No agent framework is selected or used in production during the 12-month freeze (see **Border-Security Constraints and Pre-Funding Conditions**, red flag #3). The options below are assessed only in lab/shadow mode to gather evidence for a later, accreditation-backed decision.
+
 The agent layer remains bounded in all options:
 
 - It analyses controlled findings, structured feedback, masked evidence, and approved metadata.

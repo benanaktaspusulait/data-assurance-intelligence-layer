@@ -12,7 +12,7 @@ Principles:
 - Rules are approved before execution.
 - Rules are versioned.
 - Findings reference the exact rule version that generated them.
-- Rule changes require human approval.
+- Rule changes require human approval. Specifically, rule changes (including agent-suggested ones) require two-person (2PR) approval and a mandatory 7-day live shadow window with no alerts before activation (detailed under Border-Security Legal and AI Controls below).
 - Backtesting should be performed before deployment where data is available.
 - Rule activation is staged: shadow, then canary (narrow slice), then full deployment, with automatic rollback if the false-positive rate exceeds an agreed threshold shortly after activation.
 - Rollback should be possible.
@@ -96,6 +96,17 @@ Each rule and finding should declare the maximum data classification it may acce
 | Sensitive operational data | Operational values or context that may reveal platform behaviour. | Minimise, mask where possible, and restrict by RBAC. |
 | PII / identity-related data | Identity, document, person, journey, or other individual-related data. | Do not store raw values in findings; use masking, hashes, or references. |
 | Highly restricted investigation-only data | Data requiring exceptional access or case-specific investigation. | Exclude from PoC findings unless explicitly approved by governance. |
+
+The machine-readable enum values used in the rule schema (`classification.max_input_classification` /
+`max_output_classification` in **Supporting Technical Detail**) map one-to-one to the labels above:
+
+| Classification label | Schema enum value |
+| --- | --- |
+| Public / non-sensitive metadata | `public_metadata` |
+| Internal operational metadata | `internal_operational_metadata` |
+| Sensitive operational data | `sensitive_operational_data` |
+| PII / identity-related data | `pii_identity_related` |
+| Highly restricted investigation-only data | `highly_restricted_investigation_only` |
 
 Raw rows should not be stored directly in the findings store. Findings should store aggregate evidence, masked sample references where allowed, hashes, rule/run metadata, and links to governed evidence locations.
 

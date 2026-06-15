@@ -21,6 +21,8 @@ Acceptable alternative: **Spring Boot** if Cerberos is already Spring Boot-based
 
 Kotlin/Ktor is a good option if Kotlin alignment or future Koog orchestration becomes a major driver, but it should be selected based on team and platform fit rather than novelty.
 
+**Accreditation note.** In the OFFICIAL-SENSITIVE border-security context, **Spring Boot is the preferred default** for accreditation familiarity (see Amber flag #8 in **Border-Security Constraints and Pre-Funding Conditions**). Quarkus remains a candidate only where the team already has Quarkus experience and accreditation is not blocked; it should not be chosen for lightweight-runtime reasons alone. The backend decision must be confirmed before the PoC.
+
 ## 2. Rule Definition and Rule Registry
 
 | Option | Strengths | Concerns | Recommendation |

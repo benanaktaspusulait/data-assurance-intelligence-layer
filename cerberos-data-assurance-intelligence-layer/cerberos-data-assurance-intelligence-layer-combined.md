@@ -635,7 +635,7 @@ Principles:
 - Rules are approved before execution.
 - Rules are versioned.
 - Findings reference the exact rule version that generated them.
-- Rule changes require human approval.
+- Rule changes require human approval. Specifically, rule changes (including agent-suggested ones) require two-person (2PR) approval and a mandatory 7-day live shadow window with no alerts before activation (detailed under Border-Security Legal and AI Controls below).
 - Backtesting should be performed before deployment where data is available.
 - Rule activation is staged: shadow, then canary (narrow slice), then full deployment, with automatic rollback if the false-positive rate exceeds an agreed threshold shortly after activation.
 - Rollback should be possible.
@@ -719,6 +719,17 @@ Each rule and finding should declare the maximum data classification it may acce
 | Sensitive operational data | Operational values or context that may reveal platform behaviour. | Minimise, mask where possible, and restrict by RBAC. |
 | PII / identity-related data | Identity, document, person, journey, or other individual-related data. | Do not store raw values in findings; use masking, hashes, or references. |
 | Highly restricted investigation-only data | Data requiring exceptional access or case-specific investigation. | Exclude from PoC findings unless explicitly approved by governance. |
+
+The machine-readable enum values used in the rule schema (`classification.max_input_classification` /
+`max_output_classification` in **Supporting Technical Detail**) map one-to-one to the labels above:
+
+| Classification label | Schema enum value |
+| --- | --- |
+| Public / non-sensitive metadata | `public_metadata` |
+| Internal operational metadata | `internal_operational_metadata` |
+| Sensitive operational data | `sensitive_operational_data` |
+| PII / identity-related data | `pii_identity_related` |
+| Highly restricted investigation-only data | `highly_restricted_investigation_only` |
 
 Raw rows should not be stored directly in the findings store. Findings should store aggregate evidence, masked sample references where allowed, hashes, rule/run metadata, and links to governed evidence locations.
 
@@ -899,7 +910,9 @@ A concrete instantiation of the scope above, to accelerate discovery:
   5. **Anomaly (simple):** hourly volume per source more than 3 standard deviations below the trailing 7-day average.
 
 These rules are simple, meaningful, and produce data-backed feedback immediately. They map onto the
-canonical categories in **Rule Types, Data Model, and Examples**.
+canonical categories in **Rule Types, Data Model, and Examples**. The count stays at five even when a
+rule is also expressed against an analytical Athena source - that is the same rule with two source
+variants, not an additional rule (see **S3, Parquet, Glue Data Catalog and Athena Analytical Assurance Layer**).
 
 ## Success Criteria
 
@@ -923,6 +936,13 @@ Potential PoC measures:
 - Number of useful rule refinements suggested.
 - Athena scan cost per analytical rule.
 - Zero production-impact incidents caused by the PoC.
+
+Measurement method: capture a baseline of current manual data-quality investigation time before the
+PoC (a 2-3 week time-tracking or sampling exercise with the relevant team), then compare against time
+spent after findings are available. "Zero production-impact" is assured structurally - read-only
+sources, separate infrastructure from production workloads, query cost/row/time caps - and verified by
+the platform's own observability (no production DB write paths, no production latency impact in
+monitoring).
 
 ## Risks and Mitigations
 
@@ -1187,9 +1207,14 @@ select
 from journey_events
 where event_timestamp >= :window_start
   and event_timestamp < :window_end
+  and external_reference is not null
 group by external_reference, source_system
 having count(*) > 1;
 ```
+
+The `external_reference is not null` filter is important: without it, rows with a NULL reference would
+be grouped together and reported as false duplicates. Missing-reference cases belong in a separate
+completeness check, not the duplicate check.
 
 ## 4. Referential Integrity
 
@@ -1812,6 +1837,11 @@ Each trace should carry a `correlation_id` (typically the `rule_run_id`) so that
 | Notification delivery | Per alert | Delivery failure or latency > SLA |
 | Dead letter queue depth | Every minute | DLQ depth > 0 for more than 10 minutes |
 
+Indicative PoC default thresholds (to be tuned with real data): daily Athena/query budget alert at
+USD 10/day and a hard cap at USD 25/day; hourly cost alert at USD 2/hour; "cost spike" defined as 3x
+the trailing 7-day hourly average; backlog alert at > 50 rules or > 30 minutes old. These are starting
+values, not commitments.
+
 ### Self-Monitoring Alerts
 
 | Condition | Severity | Action |
@@ -1948,6 +1978,8 @@ Advanced tracing, cost monitoring, and learning engine observability can be adde
 The main architecture concept intentionally focuses on assurance, governance, human review, and the learning loop. However, if the capability is implemented in the JVM ecosystem, the agent framework choice becomes an important architecture decision.
 
 This page compares realistic JVM-oriented options for the optional agent/Copilot-assisted layer. It should not be read as a final technology selection. The strategy for abstracting over several providers and switching between them under governance is covered in the child page **Multi-Provider Agent Framework Strategy**.
+
+> **Important:** No agent framework is selected or used in production during the 12-month freeze (see **Border-Security Constraints and Pre-Funding Conditions**, red flag #3). The options below are assessed only in lab/shadow mode to gather evidence for a later, accreditation-backed decision.
 
 The agent layer remains bounded in all options:
 
@@ -2803,6 +2835,8 @@ Acceptable alternative: **Spring Boot** if Cerberos is already Spring Boot-based
 
 Kotlin/Ktor is a good option if Kotlin alignment or future Koog orchestration becomes a major driver, but it should be selected based on team and platform fit rather than novelty.
 
+**Accreditation note.** In the OFFICIAL-SENSITIVE border-security context, **Spring Boot is the preferred default** for accreditation familiarity (see Amber flag #8 in **Border-Security Constraints and Pre-Funding Conditions**). Quarkus remains a candidate only where the team already has Quarkus experience and accreditation is not blocked; it should not be chosen for lightweight-runtime reasons alone. The backend decision must be confirmed before the PoC.
+
 ## 2. Rule Definition and Rule Registry
 
 | Option | Strengths | Concerns | Recommendation |
@@ -3321,7 +3355,7 @@ Context: Cerberos requires an enterprise-grade backend for rule execution, APIs,
 
 Decision: Use a JVM-based backend service. Java 21 + Quarkus is a candidate PoC option if it aligns with existing platform standards.
 
-Consequences: Strong fit for JDBC, AWS SDK, OpenTelemetry, containers, and enterprise maintainability. Team familiarity must be confirmed.
+Consequences: Strong fit for JDBC, AWS SDK, OpenTelemetry, containers, and enterprise maintainability. Team familiarity must be confirmed. For OFFICIAL-SENSITIVE accreditation familiarity, Spring Boot is the preferred default; Quarkus remains a candidate only where the team already uses it and accreditation is not blocked.
 
 Alternatives considered: Spring Boot, Kotlin/Ktor, Python FastAPI, Node.js/NestJS.
 
@@ -3688,6 +3722,7 @@ Platform evolution should be driven by reviewed findings and user feedback, not 
 - Native OpenTelemetry support, so observability comes early without extra build-out.
 - Fits enterprise maintainability, deployment, and incident patterns.
 - Java 21 + Quarkus is suitable as a candidate PoC option if it aligns with platform standards. Kotlin/Ktor is a valid alternative for Kotlin-heavy teams or if future Koog orchestration becomes a driver. Spring Boot may be more appropriate if Cerberos is already strongly Spring-based.
+- For OFFICIAL-SENSITIVE accreditation familiarity, **Spring Boot is the preferred default**; Quarkus stays a candidate only where the team already uses it and accreditation is not blocked (see **Border-Security Constraints and Pre-Funding Conditions**, Amber flag #8).
 
 ## Why PostgreSQL for Findings/Feedback
 
@@ -3846,6 +3881,10 @@ A sensible first step is a narrow, read-only discovery PoC:
 
 The PoC explicitly excludes production writes, autonomous remediation, unrestricted AI access,
 multi-domain rollout, full dashboard build-out, and complex ML anomaly detection.
+
+The AI/agent layer is also out of scope: agent frameworks are under a 12-month freeze and are
+assessed only in lab/shadow mode, never in production, until accreditation evidence and a governance
+decision exist. The PoC proves the assurance loop deterministically, without any LLM dependency.
 
 ## 7. Suggested Next Step
 
@@ -4124,6 +4163,8 @@ Notes:
 - `additionalProperties: false` at every level keeps rule files tightly constrained; new fields must be added to the schema deliberately.
 - The optional `classification` block lets each rule declare its maximum input and output data classification, aligned to the **Governance, Security, and Scale** data classification model. It is the machine-readable form of "each rule and finding should declare the maximum classification it may access and output".
 - `governance.targets_protected_attributes` flags rules keyed on protected attributes (for example nationality cohorts). When `true`, the rule must not be deployed without explicit governance sign-off, per **Border-Security Constraints and Pre-Funding Conditions**.
+- `pii_level` describes the sensitivity the rule *touches*: `none` (no personal data), `masked_samples_only` (may surface masked sample evidence, no raw PII), or `sensitive` (queries sensitive columns internally but must still mask outputs). Prefer the least-privileged value that lets the rule work; `sensitive` does not permit raw PII in findings - output masking and the `classification` block still apply.
+- Schema evolution: rules are versioned, and new schema fields are added as **optional**, so existing rule files continue to validate. `additionalProperties: false` blocks unknown keys, so any genuinely new field must be added to the schema deliberately and rolled out with a schema version bump; old rule versions validate against the schema version they were authored under.
 
 ## 3. Rule Execution Sequence
 
@@ -4429,6 +4470,15 @@ similar rules using a rule-based (non-ML) approach.
 value_score = (confirmed_findings * severity_weight) / (execution_cost + review_time)
 ```
 
+Definitions for the PoC:
+
+- `severity_weight`: CRITICAL = 4, HIGH = 3, MEDIUM = 2, LOW = 1.
+- `execution_cost`: a normalised cost unit per run - for Athena, derived from estimated scanned bytes
+  (cost in currency); for replica DB, derived from query duration. Both are normalised to a 0-1 scale
+  per source so the score is comparable across sources.
+- `review_time`: average reviewer time per finding for the rule, measured from finding creation to
+  first feedback (the existing `dq.feedback.time_to_review_hours` metric).
+
 Low value-score rules are surfaced for owner review and possible retirement, so effort and cost stay
 focused on rules that produce actionable assurance.
 
@@ -4687,6 +4737,13 @@ Schema evolution principles:
 - Define a Glue Data Catalog update strategy.
 - Avoid uncontrolled crawler-driven surprises in production.
 
+Concrete process: additive, backward-compatible changes (new optional columns) are allowed and
+versioned in the Glue table definition; breaking changes (type changes, removals, semantic changes)
+require a new table version or a new partition/dataset rather than mutating in place. Schema changes
+to critical curated datasets go through the controlled Glue table definition (IaC or approved metadata
+workflow), with a compatibility check in CI before promotion. Observed-vs-expected schema drift is
+detected and reviewed (see the schema drift rule), not silently absorbed by a crawler.
+
 Raw payloads may still be retained separately for investigation and audit. Parquet should be the preferred analytical format, not necessarily the only retained format.
 
 ## 6. Partitioning Strategy
@@ -4882,6 +4939,12 @@ the same canonical reconciliation rule run over curated Parquet. "Source volume 
 "Candidate rule backtest" are analytical-layer additions that exercise historical, partition-aware
 queries. The canonical replica-DB rules (freshness, duplicate external reference, broken
 journey-person reference) remain defined in **PoC, Roadmap, and Risks**.
+
+Rule count clarification: the PoC remains **five canonical rules**. A rule executed against both a
+replica and an Athena dataset is the *same rule with two source variants*, not two rules. "Source
+volume baseline" and "Candidate rule backtest" are not additional production rules; the baseline is
+the analytical form of the canonical simple-anomaly rule, and the backtest is an evaluation activity,
+not a standing rule. So the analytical layer does not increase the five-rule PoC count.
 
 Success criteria:
 

@@ -71,9 +71,14 @@ select
 from journey_events
 where event_timestamp >= :window_start
   and event_timestamp < :window_end
+  and external_reference is not null
 group by external_reference, source_system
 having count(*) > 1;
 ```
+
+The `external_reference is not null` filter is important: without it, rows with a NULL reference would
+be grouped together and reported as false duplicates. Missing-reference cases belong in a separate
+completeness check, not the duplicate check.
 
 ## 4. Referential Integrity
 

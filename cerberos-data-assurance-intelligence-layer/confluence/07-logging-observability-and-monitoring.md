@@ -154,6 +154,11 @@ Each trace should carry a `correlation_id` (typically the `rule_run_id`) so that
 | Notification delivery | Per alert | Delivery failure or latency > SLA |
 | Dead letter queue depth | Every minute | DLQ depth > 0 for more than 10 minutes |
 
+Indicative PoC default thresholds (to be tuned with real data): daily Athena/query budget alert at
+USD 10/day and a hard cap at USD 25/day; hourly cost alert at USD 2/hour; "cost spike" defined as 3x
+the trailing 7-day hourly average; backlog alert at > 50 rules or > 30 minutes old. These are starting
+values, not commitments.
+
 ### Self-Monitoring Alerts
 
 | Condition | Severity | Action |

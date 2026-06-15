@@ -39,6 +39,7 @@
 - Native OpenTelemetry support, so observability comes early without extra build-out.
 - Fits enterprise maintainability, deployment, and incident patterns.
 - Java 21 + Quarkus is suitable as a candidate PoC option if it aligns with platform standards. Kotlin/Ktor is a valid alternative for Kotlin-heavy teams or if future Koog orchestration becomes a driver. Spring Boot may be more appropriate if Cerberos is already strongly Spring-based.
+- For OFFICIAL-SENSITIVE accreditation familiarity, **Spring Boot is the preferred default**; Quarkus stays a candidate only where the team already uses it and accreditation is not blocked (see **Border-Security Constraints and Pre-Funding Conditions**, Amber flag #8).
 
 ## Why PostgreSQL for Findings/Feedback
 

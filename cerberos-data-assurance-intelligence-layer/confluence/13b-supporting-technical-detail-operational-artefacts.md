@@ -151,6 +151,15 @@ similar rules using a rule-based (non-ML) approach.
 value_score = (confirmed_findings * severity_weight) / (execution_cost + review_time)
 ```
 
+Definitions for the PoC:
+
+- `severity_weight`: CRITICAL = 4, HIGH = 3, MEDIUM = 2, LOW = 1.
+- `execution_cost`: a normalised cost unit per run - for Athena, derived from estimated scanned bytes
+  (cost in currency); for replica DB, derived from query duration. Both are normalised to a 0-1 scale
+  per source so the score is comparable across sources.
+- `review_time`: average reviewer time per finding for the rule, measured from finding creation to
+  first feedback (the existing `dq.feedback.time_to_review_hours` metric).
+
 Low value-score rules are surfaced for owner review and possible retirement, so effort and cost stay
 focused on rules that produce actionable assurance.
 

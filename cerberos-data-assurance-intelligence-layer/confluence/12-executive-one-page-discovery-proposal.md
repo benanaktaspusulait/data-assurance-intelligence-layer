@@ -90,6 +90,10 @@ A sensible first step is a narrow, read-only discovery PoC:
 The PoC explicitly excludes production writes, autonomous remediation, unrestricted AI access,
 multi-domain rollout, full dashboard build-out, and complex ML anomaly detection.
 
+The AI/agent layer is also out of scope: agent frameworks are under a 12-month freeze and are
+assessed only in lab/shadow mode, never in production, until accreditation evidence and a governance
+decision exist. The PoC proves the assurance loop deterministically, without any LLM dependency.
+
 ## 7. Suggested Next Step
 
 The recommended next step is a short architecture discovery conversation with a Lead Architect or

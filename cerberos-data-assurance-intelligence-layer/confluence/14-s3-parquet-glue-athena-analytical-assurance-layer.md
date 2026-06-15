@@ -210,6 +210,13 @@ Schema evolution principles:
 - Define a Glue Data Catalog update strategy.
 - Avoid uncontrolled crawler-driven surprises in production.
 
+Concrete process: additive, backward-compatible changes (new optional columns) are allowed and
+versioned in the Glue table definition; breaking changes (type changes, removals, semantic changes)
+require a new table version or a new partition/dataset rather than mutating in place. Schema changes
+to critical curated datasets go through the controlled Glue table definition (IaC or approved metadata
+workflow), with a compatibility check in CI before promotion. Observed-vs-expected schema drift is
+detected and reviewed (see the schema drift rule), not silently absorbed by a crawler.
+
 Raw payloads may still be retained separately for investigation and audit. Parquet should be the preferred analytical format, not necessarily the only retained format.
 
 ## 6. Partitioning Strategy
@@ -405,6 +412,12 @@ the same canonical reconciliation rule run over curated Parquet. "Source volume 
 "Candidate rule backtest" are analytical-layer additions that exercise historical, partition-aware
 queries. The canonical replica-DB rules (freshness, duplicate external reference, broken
 journey-person reference) remain defined in **PoC, Roadmap, and Risks**.
+
+Rule count clarification: the PoC remains **five canonical rules**. A rule executed against both a
+replica and an Athena dataset is the *same rule with two source variants*, not two rules. "Source
+volume baseline" and "Candidate rule backtest" are not additional production rules; the baseline is
+the analytical form of the canonical simple-anomaly rule, and the backtest is an evaluation activity,
+not a standing rule. So the analytical layer does not increase the five-rule PoC count.
 
 Success criteria:
 

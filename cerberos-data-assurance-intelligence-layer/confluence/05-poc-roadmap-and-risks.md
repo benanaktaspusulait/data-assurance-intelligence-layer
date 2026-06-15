@@ -61,7 +61,9 @@ A concrete instantiation of the scope above, to accelerate discovery:
   5. **Anomaly (simple):** hourly volume per source more than 3 standard deviations below the trailing 7-day average.
 
 These rules are simple, meaningful, and produce data-backed feedback immediately. They map onto the
-canonical categories in **Rule Types, Data Model, and Examples**.
+canonical categories in **Rule Types, Data Model, and Examples**. The count stays at five even when a
+rule is also expressed against an analytical Athena source - that is the same rule with two source
+variants, not an additional rule (see **S3, Parquet, Glue Data Catalog and Athena Analytical Assurance Layer**).
 
 ## Success Criteria
 
@@ -85,6 +87,13 @@ Potential PoC measures:
 - Number of useful rule refinements suggested.
 - Athena scan cost per analytical rule.
 - Zero production-impact incidents caused by the PoC.
+
+Measurement method: capture a baseline of current manual data-quality investigation time before the
+PoC (a 2-3 week time-tracking or sampling exercise with the relevant team), then compare against time
+spent after findings are available. "Zero production-impact" is assured structurally - read-only
+sources, separate infrastructure from production workloads, query cost/row/time caps - and verified by
+the platform's own observability (no production DB write paths, no production latency impact in
+monitoring).
 
 ## Risks and Mitigations
 
