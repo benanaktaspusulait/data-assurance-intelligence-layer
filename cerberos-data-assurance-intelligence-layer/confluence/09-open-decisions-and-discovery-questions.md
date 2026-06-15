@@ -56,7 +56,7 @@ The aim is to make uncertainty explicit rather than hide it.
 | Feedback retention | How long should reviewer decisions, reason codes, comments, and correction history be retained? |
 | Masked evidence retention | How long should masked sample references, hashes, and evidence links remain available? |
 | Audit event retention | What retention period is required for rule execution, access, approval, and review audit events? |
-| Agent prompt/output retention | If an agent is enabled, should prompts, structured inputs, and outputs be retained, redacted, or excluded? |
+| Agent prompt/output retention | If an agent is enabled, should prompts, structured inputs, and outputs be retained, redacted, or excluded? Recommended default: retain for 90 days in the controlled agent-output audit zone, access limited to audit and security teams, then automatic destruction - to be confirmed by governance. |
 | Backtest result retention | How long should shadow run outputs and backtest reports be retained for future rule approval evidence? |
 | Athena query metadata | How long should query execution IDs, scan metrics, and workgroup cost metadata be retained? |
 
@@ -112,11 +112,11 @@ Delivered in **Supporting Technical Detail**:
 - ER diagram for the conceptual data model.
 - Comparison with data quality tools such as Great Expectations, Deequ, and Soda Core.
 
-Still outstanding (not yet produced):
+Delivered since (now produced):
 
-- Dashboard wireframes for executive and technical views. The dashboard *content* is described in
-  **Governance, Security, and Scale** and **Logging, Observability, and Monitoring**, but visual
-  wireframes have not been produced and can be deferred until UI work begins.
+- Indicative dashboard wireframes (ASCII sketches) for the platform operations and data assurance
+  effectiveness views are in **Logging, Observability, and Monitoring**. Full UI designs remain a
+  later, UI-phase activity.
 
 ## Recommended Next Step
 

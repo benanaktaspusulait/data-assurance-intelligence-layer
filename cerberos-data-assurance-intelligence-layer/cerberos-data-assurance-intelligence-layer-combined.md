@@ -725,7 +725,7 @@ Retention should be agreed during discovery for:
 - Masked evidence references.
 - Audit events.
 - Rule execution metadata.
-- Agent prompts and outputs, if enabled.
+- Agent prompts and outputs, if enabled. Recommended default: 90-day retention in the controlled agent-output audit zone, access restricted to audit and security teams, with automatic destruction after the retention period (subject to governance confirmation).
 - Backtest results.
 - Athena query result metadata and query execution IDs.
 
@@ -1456,6 +1456,26 @@ the monthly finding quota described in **Supporting Technical Detail** and
 - `window_end`
 - `created_at`
 
+### dq_agent_provider_metric
+
+- `id`
+- `provider_name`
+- `window_start`
+- `window_end`
+- `calls`
+- `errors`
+- `approval_rate`
+- `false_positive_rate`
+- `latency_p50_ms`
+- `latency_p95_ms`
+- `latency_p99_ms`
+- `avg_self_confidence`
+- `calibration_gap`
+- `created_at`
+
+This table backs the metrics-driven routing in **Multi-Provider Agent Framework Strategy**. For the
+PoC it is optional; `dq_metric_snapshot` can hold the same metrics until multi-provider evaluation begins.
+
 ### dq_audit_event
 
 - `id`
@@ -1836,6 +1856,43 @@ exhausted, allowing the platform to protect itself and recover automatically.
 - Learning suggestions generated vs approved.
 - Top recurring issues.
 - Coverage: domains and sources with active rules vs total.
+
+### Dashboard Wireframes (Indicative)
+
+Simple indicative layouts; not final UI designs.
+
+Platform Operations Dashboard:
+
+```text
++-------------------------------------------------------------+
+| Platform Operations                          [last 24h | 7d]|
++----------------------+----------------------+---------------+
+| Rule runs  OK / FAIL | Query p99 latency    | Cost (day/wk) |
+|   12,340 / 27        |   4.2s               |  $18 / $120   |
++----------------------+----------------------+---------------+
+| Scheduler backlog/drift | Connector health map            |
+|   3 rules / 0s         | A:OK  B:OK  Athena:OPEN(breaker) |
++----------------------+----------------------+---------------+
+| Dead-letter queue depth: 0     Error rate by component: ... |
++-------------------------------------------------------------+
+```
+
+Data Assurance Effectiveness Dashboard:
+
+```text
++-------------------------------------------------------------+
+| Data Assurance Effectiveness                 [domain v][7d] |
++----------------------+----------------------+---------------+
+| Findings created     | Confirmed vs Rejected | False-pos %  |
+|   4,210 (clustered)  |   1,980 / 410        |   9.4%        |
++----------------------+----------------------+---------------+
+| Mean time to review  | Confidence distribution             |
+|   3.1h               |   [#### high ## mid # low ]          |
++----------------------+----------------------+---------------+
+| Learning suggestions: generated 12 / approved 7            |
+| Top recurring issues: missing nationality (Source A) ...   |
++-------------------------------------------------------------+
+```
 
 ## Technology Considerations
 
@@ -2431,7 +2488,7 @@ The aim is to make uncertainty explicit rather than hide it.
 | Feedback retention | How long should reviewer decisions, reason codes, comments, and correction history be retained? |
 | Masked evidence retention | How long should masked sample references, hashes, and evidence links remain available? |
 | Audit event retention | What retention period is required for rule execution, access, approval, and review audit events? |
-| Agent prompt/output retention | If an agent is enabled, should prompts, structured inputs, and outputs be retained, redacted, or excluded? |
+| Agent prompt/output retention | If an agent is enabled, should prompts, structured inputs, and outputs be retained, redacted, or excluded? Recommended default: retain for 90 days in the controlled agent-output audit zone, access limited to audit and security teams, then automatic destruction - to be confirmed by governance. |
 | Backtest result retention | How long should shadow run outputs and backtest reports be retained for future rule approval evidence? |
 | Athena query metadata | How long should query execution IDs, scan metrics, and workgroup cost metadata be retained? |
 
@@ -2487,11 +2544,11 @@ Delivered in **Supporting Technical Detail**:
 - ER diagram for the conceptual data model.
 - Comparison with data quality tools such as Great Expectations, Deequ, and Soda Core.
 
-Still outstanding (not yet produced):
+Delivered since (now produced):
 
-- Dashboard wireframes for executive and technical views. The dashboard *content* is described in
-  **Governance, Security, and Scale** and **Logging, Observability, and Monitoring**, but visual
-  wireframes have not been produced and can be deferred until UI work begins.
+- Indicative dashboard wireframes (ASCII sketches) for the platform operations and data assurance
+  effectiveness views are in **Logging, Observability, and Monitoring**. Full UI designs remain a
+  later, UI-phase activity.
 
 ## Recommended Next Step
 

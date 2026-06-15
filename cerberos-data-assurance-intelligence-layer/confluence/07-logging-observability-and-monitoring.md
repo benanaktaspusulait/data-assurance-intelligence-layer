@@ -205,6 +205,43 @@ exhausted, allowing the platform to protect itself and recover automatically.
 - Top recurring issues.
 - Coverage: domains and sources with active rules vs total.
 
+### Dashboard Wireframes (Indicative)
+
+Simple indicative layouts; not final UI designs.
+
+Platform Operations Dashboard:
+
+```text
++-------------------------------------------------------------+
+| Platform Operations                          [last 24h | 7d]|
++----------------------+----------------------+---------------+
+| Rule runs  OK / FAIL | Query p99 latency    | Cost (day/wk) |
+|   12,340 / 27        |   4.2s               |  $18 / $120   |
++----------------------+----------------------+---------------+
+| Scheduler backlog/drift | Connector health map            |
+|   3 rules / 0s         | A:OK  B:OK  Athena:OPEN(breaker) |
++----------------------+----------------------+---------------+
+| Dead-letter queue depth: 0     Error rate by component: ... |
++-------------------------------------------------------------+
+```
+
+Data Assurance Effectiveness Dashboard:
+
+```text
++-------------------------------------------------------------+
+| Data Assurance Effectiveness                 [domain v][7d] |
++----------------------+----------------------+---------------+
+| Findings created     | Confirmed vs Rejected | False-pos %  |
+|   4,210 (clustered)  |   1,980 / 410        |   9.4%        |
++----------------------+----------------------+---------------+
+| Mean time to review  | Confidence distribution             |
+|   3.1h               |   [#### high ## mid # low ]          |
++----------------------+----------------------+---------------+
+| Learning suggestions: generated 12 / approved 7            |
+| Top recurring issues: missing nationality (Source A) ...   |
++-------------------------------------------------------------+
+```
+
 ## Technology Considerations
 
 Specific tooling decisions are deferred to the PoC phase, but candidate options include:

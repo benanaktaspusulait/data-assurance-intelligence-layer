@@ -346,6 +346,26 @@ the monthly finding quota described in **Supporting Technical Detail** and
 - `window_end`
 - `created_at`
 
+### dq_agent_provider_metric
+
+- `id`
+- `provider_name`
+- `window_start`
+- `window_end`
+- `calls`
+- `errors`
+- `approval_rate`
+- `false_positive_rate`
+- `latency_p50_ms`
+- `latency_p95_ms`
+- `latency_p99_ms`
+- `avg_self_confidence`
+- `calibration_gap`
+- `created_at`
+
+This table backs the metrics-driven routing in **Multi-Provider Agent Framework Strategy**. For the
+PoC it is optional; `dq_metric_snapshot` can hold the same metrics until multi-provider evaluation begins.
+
 ### dq_audit_event
 
 - `id`

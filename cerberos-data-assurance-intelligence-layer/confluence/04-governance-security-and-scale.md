@@ -108,7 +108,7 @@ Retention should be agreed during discovery for:
 - Masked evidence references.
 - Audit events.
 - Rule execution metadata.
-- Agent prompts and outputs, if enabled.
+- Agent prompts and outputs, if enabled. Recommended default: 90-day retention in the controlled agent-output audit zone, access restricted to audit and security teams, with automatic destruction after the retention period (subject to governance confirmation).
 - Backtest results.
 - Athena query result metadata and query execution IDs.
 
