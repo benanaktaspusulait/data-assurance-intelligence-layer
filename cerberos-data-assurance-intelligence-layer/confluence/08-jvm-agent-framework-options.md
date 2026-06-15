@@ -8,7 +8,7 @@
 
 The main architecture concept intentionally focuses on assurance, governance, human review, and the learning loop. However, if the capability is implemented in the JVM ecosystem, the agent framework choice becomes an important architecture decision.
 
-This page compares realistic JVM-oriented options for the optional agent/Copilot-assisted layer. It should not be read as a final technology selection.
+This page compares realistic JVM-oriented options for the optional agent/Copilot-assisted layer. It should not be read as a final technology selection. The strategy for abstracting over several providers and switching between them under governance is covered in the child page **Multi-Provider Agent Framework Strategy**.
 
 The agent layer remains bounded in all options:
 

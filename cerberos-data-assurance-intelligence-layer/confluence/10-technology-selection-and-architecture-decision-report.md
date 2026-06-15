@@ -9,7 +9,7 @@ For the shorter technical summary, see **Architecture Decision Summary**.
 
 For analytical assurance over S3, Parquet, Glue Data Catalog, and Athena, see **S3, Parquet, Glue Data Catalog and Athena Analytical Assurance Layer**.
 
-For the technology decision matrix and the full Architecture Decision Records (ADR-001 to ADR-014), see **Architecture Decision Records and Reference Architecture**.
+For the technology decision matrix and the full Architecture Decision Records (ADR-001 to ADR-018), see **Architecture Decision Records and Reference Architecture**.
 
 For the detailed per-component technology options, see **Component Technology Choices**.
 
@@ -106,7 +106,7 @@ Why this is suitable for discovery:
 
 The detailed per-component technology options and recommendations (backend, rule registry, query execution, data sources, findings and feedback store, review UI, learning engine, agent integration, AWS services, scheduling, observability, security, and deployment) are captured in the child page **Component Technology Choices** to keep this report at a readable length.
 
-The technology decision matrix, the full set of Architecture Decision Records (ADR-001 to ADR-014), and the reference PoC and future platform architecture diagrams are captured in the child page **Architecture Decision Records and Reference Architecture** to keep this report at a readable length.
+The technology decision matrix, the full set of Architecture Decision Records (ADR-001 to ADR-018), and the reference PoC and future platform architecture diagrams are captured in the child page **Architecture Decision Records and Reference Architecture** to keep this report at a readable length.
 
 ## 5. Risks and Trade-Offs
 

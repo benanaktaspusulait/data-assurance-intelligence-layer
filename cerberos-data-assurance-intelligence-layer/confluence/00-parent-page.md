@@ -4,7 +4,7 @@
 **Audience:** Architecture, platform, engineering management, delivery, and data governance stakeholders  
 **Purpose:** Initial discovery discussion, not a final implementation proposal
 
-This Confluence set is structured as one parent page plus 19 child pages (20 sections in total: this parent page followed by 19 child pages).
+This Confluence set is structured as one parent page plus 20 child pages (21 sections in total: this parent page followed by 20 child pages).
 
 ## Summary
 
@@ -85,16 +85,17 @@ This discovery concept is split into the following child pages:
 7. Rule Types, Data Model, and Examples
 8. Logging, Observability, and Monitoring
 9. JVM Agent Framework Options
-10. Open Decisions and Discovery Questions
-11. Technology Selection and Architecture Decision Report
-12. Component Technology Choices
-13. Architecture Decision Records and Reference Architecture
-14. Architecture Decision Summary
-15. Executive Discovery Proposal
-16. Supporting Technical Detail
-17. Glossary
-18. S3, Parquet, Glue Data Catalog and Athena Analytical Assurance Layer
-19. Athena Analytical DQ Examples and Sub-Architectures
+10. Multi-Provider Agent Framework Strategy
+11. Open Decisions and Discovery Questions
+12. Technology Selection and Architecture Decision Report
+13. Component Technology Choices
+14. Architecture Decision Records and Reference Architecture
+15. Architecture Decision Summary
+16. Executive Discovery Proposal
+17. Supporting Technical Detail
+18. Glossary
+19. S3, Parquet, Glue Data Catalog and Athena Analytical Assurance Layer
+20. Athena Analytical DQ Examples and Sub-Architectures
 
 ## Suggested Reading Paths
 
@@ -125,12 +126,13 @@ For technical implementation review (only if an implementation approach is reque
 - Athena Analytical DQ Examples and Sub-Architectures
 - Logging, Observability, and Monitoring
 - JVM Agent Framework Options
+- Multi-Provider Agent Framework Strategy
 
 The Glossary is a shared reference page and can be linked from any path. The technical implementation
 pages (Technology Selection, Component Technology Choices, Architecture Decision Records, Supporting
-Technical Detail, Athena Analytical DQ Examples, and JVM Agent Framework Options in particular) are
-technical appendices. They should be kept out of the initial stakeholder pack so the discovery does
-not read as implementation-ready too early.
+Technical Detail, Athena Analytical DQ Examples, JVM Agent Framework Options, and Multi-Provider Agent
+Framework Strategy in particular) are technical appendices. They should be kept out of the initial
+stakeholder pack so the discovery does not read as implementation-ready too early.
 
 ## Initial Recommendation
 

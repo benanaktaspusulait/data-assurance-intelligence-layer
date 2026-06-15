@@ -2,7 +2,7 @@
 
 **Parent page:** Cerberos Data Assurance Intelligence Layer - Initial Discovery Concept  
 **Status:** Private working draft  
-**Purpose:** Technology decision matrix, Architecture Decision Records (ADR-001 to ADR-014), and reference PoC/platform architecture
+**Purpose:** Technology decision matrix, Architecture Decision Records (ADR-001 to ADR-018), and reference PoC/platform architecture
 **Companion page:** See **Technology Selection and Architecture Decision Report** for the full analysis and rationale.
 
 ## 1. Technology Decision Matrix
@@ -197,6 +197,54 @@ Decision: Maintain separate raw and curated zones with different access controls
 Consequences: Supports investigation while keeping routine DQ checks on safer curated datasets. Requires clear data zone ownership.
 
 Alternatives considered: single shared S3 zone, direct raw querying for all checks.
+
+### ADR-015: Depend on an `AgentProvider` abstraction, not a specific framework
+
+Status: Proposed
+
+Context: Agent frameworks evolve fast and none is accredited for OFFICIAL-SENSITIVE; lock-in is risky.
+
+Decision: Business logic depends only on `AgentAnalysisService`/`AgentProvider`; frameworks sit behind adapters.
+
+Consequences: Providers are swappable; security guarantees are enforced at the adaptor boundary. Requires an abstraction and adapters to maintain.
+
+Alternatives considered: direct framework dependency, single-vendor commitment.
+
+### ADR-016: Evaluate multiple providers via a metrics-driven router
+
+Status: Proposed
+
+Context: Provider choice should be evidence-based, not assumed.
+
+Decision: Run multiple providers behind an `AgentRouter`; select by rolling approval/latency/error metrics; record per-provider metrics.
+
+Consequences: Enables objective comparison and failover. Adds a metrics pipeline and routing logic.
+
+Alternatives considered: fixed single provider, manual periodic review only.
+
+### ADR-017: No autonomous provider switch into production; human-approved promotion
+
+Status: Proposed
+
+Context: Border-security context requires controlled, auditable change.
+
+Decision: Promoting a provider to production needs two-person approval and a canary; only same-tier failover to an already-approved provider may be automatic. Every switch emits an `AGENT_PROVIDER_SWITCHED` audit event.
+
+Consequences: Safer change control; slower than fully automatic switching.
+
+Alternatives considered: fully automatic best-metric switching.
+
+### ADR-018: Provider evaluation runs in lab/shadow only during the 12-month freeze
+
+Status: Proposed
+
+Context: The agent-framework freeze forbids production agent use for 12 months but should not stop evidence-gathering.
+
+Decision: The multi-provider harness runs in lab and shadow mode only during the freeze; no agent output drives production findings, alerts, or rule changes.
+
+Consequences: The freeze becomes productive (generates go/no-go evidence) without production risk.
+
+Alternatives considered: no agent work at all during the freeze, or early production use.
 
 ## 3. Recommended PoC Architecture
 
