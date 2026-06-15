@@ -4,7 +4,7 @@
 **Audience:** Architecture, platform, engineering management, delivery, and data governance stakeholders  
 **Purpose:** Initial discovery discussion, not a final implementation proposal
 
-This Confluence set is structured as one parent page plus 14 child pages (15 sections in total: this parent page followed by 14 child pages).
+This Confluence set is structured as one parent page plus 17 child pages (18 sections in total: this parent page followed by 17 child pages).
 
 ## Summary
 
@@ -86,10 +86,13 @@ This discovery concept is split into the following child pages:
 8. JVM Agent Framework Options
 9. Open Decisions and Discovery Questions
 10. Technology Selection and Architecture Decision Report
-11. Architecture Decision Summary
-12. Executive Discovery Proposal
-13. Supporting Technical Detail
-14. S3, Parquet, Glue Data Catalog and Athena Analytical Assurance Layer
+11. Architecture Decision Records and Reference Architecture
+12. Architecture Decision Summary
+13. Executive Discovery Proposal
+14. Supporting Technical Detail
+15. Glossary
+16. S3, Parquet, Glue Data Catalog and Athena Analytical Assurance Layer
+17. Athena Analytical DQ Examples and Sub-Architectures
 
 ## Suggested Reading Paths
 
@@ -112,14 +115,18 @@ For architecture review (if interest is confirmed):
 For technical implementation review (only if an implementation approach is requested):
 
 - Technology Selection and Architecture Decision Report
+- Architecture Decision Records and Reference Architecture
 - Rule Types, Data Model, and Examples
 - Supporting Technical Detail
+- Athena Analytical DQ Examples and Sub-Architectures
 - Logging, Observability, and Monitoring
 - JVM Agent Framework Options
 
-The technical implementation pages (Technology Selection, Supporting Technical Detail, and JVM Agent
-Framework Options in particular) are technical appendices. They should be kept out of the initial
-stakeholder pack so the discovery does not read as implementation-ready too early.
+The Glossary is a shared reference page and can be linked from any path. The technical implementation
+pages (Technology Selection, Architecture Decision Records, Supporting Technical Detail, Athena
+Analytical DQ Examples, and JVM Agent Framework Options in particular) are technical appendices. They
+should be kept out of the initial stakeholder pack so the discovery does not read as
+implementation-ready too early.
 
 ## Initial Recommendation
 
