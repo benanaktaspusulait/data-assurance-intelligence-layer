@@ -1,8 +1,8 @@
-# Cerberos Data Assurance Intelligence Layer - Parent + 17 Child Page Discovery Pack
+# Cerberos Data Assurance Intelligence Layer - Parent + 18 Child Page Discovery Pack
 
 This folder contains the Cerberos Data Assurance Intelligence Layer Confluence upload material.
 
-The only reader-facing deliverable is the Confluence page set in `confluence/`: one parent page plus 17 child pages.
+The only reader-facing deliverable is the Confluence page set in `confluence/`: one parent page plus 18 child pages.
 
 ## Combined Reference File
 
@@ -20,7 +20,7 @@ Do not edit the combined file by hand, as changes will be overwritten on the nex
 
 ## Final Confluence Page Set
 
-Upload the `confluence/` folder content. The set is one parent page (item 1) plus 17 child pages (items 2-18):
+Upload the `confluence/` folder content. The set is one parent page (item 1) plus 18 child pages (items 2-19):
 
 1. `confluence/00-parent-page.md`
    - Main Confluence landing page.
@@ -44,19 +44,21 @@ Upload the `confluence/` folder content. The set is one parent page (item 1) plu
    - Child page for unresolved architecture, governance, delivery, and adoption questions.
 11. `confluence/10-technology-selection-and-architecture-decision-report.md`
    - Child page for technology selection, trade-offs, candidate PoC stack, risks, and build-vs-buy.
-12. `confluence/10a-architecture-decision-records.md`
+12. `confluence/10a-component-technology-choices.md`
+   - Child page for per-component technology options (backend, registry, query execution, sources, stores, UI, learning, agent, AWS, scheduling, observability, security, deployment).
+13. `confluence/10b-architecture-decision-records.md`
    - Child page for the technology decision matrix, ADR-001 to ADR-014, and reference architecture.
-13. `confluence/11-architecture-decision-summary.md`
+14. `confluence/11-architecture-decision-summary.md`
    - Child page for the one-page summary of the technology and architecture decisions.
-14. `confluence/12-executive-one-page-discovery-proposal.md`
+15. `confluence/12-executive-one-page-discovery-proposal.md`
    - Short discovery note suitable for initial senior stakeholder review (the first-share version).
-15. `confluence/13-supporting-technical-detail.md`
+16. `confluence/13-supporting-technical-detail.md`
    - Child page for ER diagram, rule YAML schema, sequence diagrams, confidence scoring, backtesting, notification templates, agent guardrails, and test scenarios.
-16. `confluence/13a-glossary.md`
+17. `confluence/13a-glossary.md`
    - Child page for shared terminology across the discovery pack.
-17. `confluence/14-s3-parquet-glue-athena-analytical-assurance-layer.md`
+18. `confluence/14-s3-parquet-glue-athena-analytical-assurance-layer.md`
    - Child page for the analytical S3/Parquet/Glue/Athena assurance layer concept, governance, cost, and scope.
-18. `confluence/14a-athena-analytical-dq-examples.md`
+19. `confluence/14a-athena-analytical-dq-examples.md`
    - Child page for worked Athena query examples, reconciliation, backtesting, schema drift, and agent-layer relationship.
 
 ## Publication Guidance
