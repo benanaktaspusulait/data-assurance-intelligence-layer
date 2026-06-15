@@ -1,0 +1,70 @@
+# Cerberos Data Assurance Intelligence Layer - Parent + 14 Child Page Discovery Pack
+
+This folder contains the Cerberos Data Assurance Intelligence Layer Confluence upload material.
+
+The only reader-facing deliverable is the Confluence page set in `confluence/`: one parent page plus 14 child pages.
+
+## Combined Reference File
+
+`cerberos-data-assurance-intelligence-layer-combined.md` is a generated long-form copy of the parent
+page plus all child pages in one file. It is for private review, export, or continuity checks only;
+the authoritative source is always the individual pages in `confluence/`.
+
+It is produced by `build-combined.sh`. Regenerate it after editing any `confluence/*.md` page:
+
+```bash
+./build-combined.sh
+```
+
+Do not edit the combined file by hand, as changes will be overwritten on the next run.
+
+## Final Confluence Page Set
+
+Upload the `confluence/` folder content. The set is one parent page (item 1) plus 14 child pages (items 2-15):
+
+1. `confluence/00-parent-page.md`
+   - Main Confluence landing page.
+2. `confluence/01-context-and-problem.md`
+   - Child page for context, motivation, and problem statement.
+3. `confluence/02-capability-and-architecture.md`
+   - Child page for proposed capability and architecture.
+4. `confluence/03-human-review-and-learning-loop.md`
+   - Child page for feedback, learning, and agent role.
+5. `confluence/04-governance-security-and-scale.md`
+   - Child page for governance, safety, privacy, scale, alerting, and reporting.
+6. `confluence/05-poc-roadmap-and-risks.md`
+   - Child page for PoC, roadmap, risks, mitigations, and success criteria.
+7. `confluence/06-rule-types-data-model-and-examples.md`
+   - Child page for rule categories, SQL examples, data model, and YAML examples.
+8. `confluence/07-logging-observability-and-monitoring.md`
+   - Child page for logging strategy, metrics, tracing, self-monitoring, and dashboards.
+9. `confluence/08-jvm-agent-framework-options.md`
+   - Child page for JVM agent framework options and PoC technology direction.
+10. `confluence/09-open-decisions-and-discovery-questions.md`
+   - Child page for unresolved architecture, governance, delivery, and adoption questions.
+11. `confluence/10-technology-selection-and-architecture-decision-report.md`
+   - Child page for technology selection, trade-offs, candidate PoC stack, and initial ADRs.
+12. `confluence/11-architecture-decision-summary.md`
+   - Child page for the one-page summary of the technology and architecture decisions.
+13. `confluence/12-executive-one-page-discovery-proposal.md`
+   - Short discovery note suitable for initial senior stakeholder review (the first-share version).
+14. `confluence/13-supporting-technical-detail.md`
+   - Child page for ER diagram, rule YAML schema, sequence diagrams, confidence scoring, backtesting, notification templates, agent guardrails, and test scenarios.
+15. `confluence/14-s3-parquet-glue-athena-analytical-assurance-layer.md`
+   - Child page for the analytical S3/Parquet/Glue/Athena assurance layer.
+
+## Publication Guidance
+
+This should remain a private discovery concept until the framing, evidence, and stakeholder route are clear.
+
+Recommended Confluence positioning:
+
+- Page title: `Cerberos Data Assurance Intelligence Layer - Initial Discovery Concept`
+- Status: `Private working draft`
+- Labels: `cerberos`, `data-assurance`, `architecture-discovery`, `private-draft`
+- Restrictions: limit to the intended architecture or discovery audience first
+- Tone: strategic, careful, discovery-focused, not a final proposal
+
+The core message to preserve across all versions:
+
+> This is not autonomous decision-making. It is governed data assurance supported by controlled automation, structured human feedback, and optional AI-assisted analysis.

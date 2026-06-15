@@ -1,0 +1,174 @@
+# Governance, Security, and Scale
+
+**Parent page:** Cerberos Data Assurance Intelligence Layer - Initial Discovery Concept  
+**Status:** Private working draft
+
+## Governance Principles
+
+The capability must be governed from the start.
+
+Principles:
+
+- Rules are approved before execution.
+- Rules are versioned.
+- Findings reference the exact rule version that generated them.
+- Rule changes require human approval.
+- Backtesting should be performed before deployment where data is available.
+- Rollback should be possible.
+- Exceptions are explicit, approved, versioned, and reviewed.
+- Rule owners are accountable for rule intent and quality.
+- Learning produces suggestions, not automatic changes.
+- Audit trails cover rule creation, execution, feedback, suggestions, approval, and deployment.
+
+## Indicative RACI for Discovery
+
+| Activity | Responsible | Accountable | Consulted | Informed |
+| --- | --- | --- | --- | --- |
+| Rule definition | Data/platform team | Rule owner | Domain SMEs | Delivery |
+| Finding review | Domain SME | Data owner | Platform team | Ops |
+| Rule approval | Rule owner | Architecture/Governance | Security | Delivery |
+| Platform operation | Platform team | Engineering owner | DevOps/SRE | Users |
+
+This RACI is indicative and uses generic role names (rule owner, data owner, domain SME, platform
+owner, security/governance reviewer, delivery stakeholder, SRE/DevOps). The actual responsible,
+accountable, consulted, and informed roles must be validated during discovery once real teams and
+owners are identified.
+
+## Security and Privacy Controls
+
+Required controls:
+
+- Read-only access.
+- Replica-first or analytical-source-first execution.
+- Approved query templates.
+- No production writes.
+- No uncontrolled ad-hoc queries.
+- No autonomous remediation.
+- RBAC and IAM integration.
+- Least privilege.
+- PII masking.
+- Output minimisation.
+- Secure storage.
+- Audit logging.
+- Human approval.
+- Retention policy.
+- Sensitive field controls.
+- Query allow-list.
+- Query deny-list for `UPDATE`, `DELETE`, `DROP`, `ALTER`, `TRUNCATE`, and similar operations.
+- Encryption at rest and in transit.
+- Security and compliance review.
+
+Agent safety:
+
+> Agents analyse controlled findings, structured metadata, masked evidence, and governed context. They do not receive unrestricted raw sensitive data or direct production database access.
+
+## Data Classification Model
+
+Each rule and finding should declare the maximum data classification it may access and the maximum classification it may output.
+
+| Classification | Description | PoC Handling |
+| --- | --- | --- |
+| Public / non-sensitive metadata | Public or non-sensitive technical metadata. | May be shown in dashboards if still relevant. |
+| Internal operational metadata | Source names, rule IDs, counts, timings, owners, run status. | Suitable for findings and dashboards with normal internal access controls. |
+| Sensitive operational data | Operational values or context that may reveal platform behaviour. | Minimise, mask where possible, and restrict by RBAC. |
+| PII / identity-related data | Identity, document, person, journey, or other individual-related data. | Do not store raw values in findings; use masking, hashes, or references. |
+| Highly restricted investigation-only data | Data requiring exceptional access or case-specific investigation. | Exclude from PoC findings unless explicitly approved by governance. |
+
+Raw rows should not be stored directly in the findings store. Findings should store aggregate evidence, masked sample references where allowed, hashes, rule/run metadata, and links to governed evidence locations.
+
+## Retention Decisions
+
+Retention should be agreed during discovery for:
+
+- Findings.
+- Feedback.
+- Masked evidence references.
+- Audit events.
+- Rule execution metadata.
+- Agent prompts and outputs, if enabled.
+- Backtest results.
+- Athena query result metadata and query execution IDs.
+
+## S3, Glue and Athena Governance Controls
+
+The analytical assurance layer introduces additional governance requirements for S3, Parquet, Glue Data Catalog and Athena.
+
+Required controls:
+
+- Separate raw and curated S3 zones with different access policies.
+- Raw-zone access restricted to tightly controlled investigation and schema drift use cases.
+- Curated Parquet datasets preferred for repeatable Athena DQ rules.
+- Glue Crawler permitted for PoC discovery where appropriate.
+- Critical curated schemas should move toward controlled Glue table definitions via IaC or an approved metadata workflow.
+- Athena queries must run through `SafeQueryExecutor`, not directly from UI, agent, notebook, or arbitrary service code.
+- Athena workgroups should enforce result location, encryption, and cost controls where available.
+- Query execution audit should link findings to Athena query execution IDs.
+- No raw PII should appear in Athena query outputs used for notifications or agent prompts.
+- Agent/Copilot tooling must never directly query S3 or Athena.
+
+## Scale Considerations
+
+Cerberos produces approximately 5 billion events per month. The platform must avoid scanning all raw data continuously.
+
+Recommended approaches:
+
+- Incremental time-window checks.
+- Partition-aware queries.
+- Aggregate metrics.
+- Precomputed counters.
+- Sampling where appropriate.
+- Exception-focused queries.
+- Source and event-type grouping.
+- Athena partition pruning.
+- S3 Parquet optimisation.
+- Query timeout.
+- Concurrency limit.
+- Cost control.
+- Result row limits.
+- Scheduling windows.
+- Separation from production workload.
+
+Rules should be designed to work against replicas or analytical datasets, not operational production databases.
+
+Replica DB checks and Athena analytical checks should be treated as complementary. Replica databases are appropriate for recent operational read-only checks; S3/Parquet/Athena is appropriate for historical, aggregate, reconciliation, schema drift, and backtesting checks.
+
+Detailed guidance is captured in **S3, Parquet, Glue Data Catalog and Athena Analytical Assurance Layer**.
+
+## Alerting and Notification
+
+| Severity | Suggested Handling |
+| --- | --- |
+| Critical | Immediate alert and ticket. |
+| High | Alert within defined SLA. |
+| Medium | Hourly or daily digest. |
+| Low | Dashboard and reporting only. |
+
+Alerting should include deduplication, grouping, cooldown periods, owner-based routing, and integration with Jira, ServiceNow, Teams, or Email.
+
+Repeated findings should update an existing incident where appropriate rather than creating unnecessary duplicates.
+
+## Dashboard Views
+
+Executive view:
+
+- Overall data assurance score.
+- Active critical findings.
+- Findings by domain.
+- Findings by source system.
+- Findings by owner/team.
+- Issue age.
+- Confirmed versus rejected findings.
+- Learning suggestions pending approval.
+
+Technical view:
+
+- Freshness status.
+- Duplicate rate.
+- Missing field rate.
+- Reconciliation gaps.
+- Schema drift events.
+- False positive rate.
+- Rule confidence score.
+- Top recurring issues.
+- Rule run history.
+- Evidence quality feedback.
