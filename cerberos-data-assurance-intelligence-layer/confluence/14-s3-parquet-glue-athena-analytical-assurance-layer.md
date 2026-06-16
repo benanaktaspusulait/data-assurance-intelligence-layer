@@ -398,12 +398,15 @@ Suggested PoC scope:
 - No raw PII.
 - No direct agent access to Athena.
 
-Candidate PoC rules:
+Candidate analytical items (mapping to the scope above):
 
-1. Source volume baseline check.
-2. Missing field rate by source.
-3. Inbound vs processed reconciliation.
-4. Candidate rule backtest over 7 or 28 days.
+1. Source volume baseline check - Athena DQ rule.
+2. Missing field rate by source - Athena DQ rule.
+3. Inbound vs processed reconciliation - reconciliation query.
+4. Candidate rule backtest over 7 or 28 days - evaluation activity, not a standing rule.
+
+This is the "two Athena DQ rules + one reconciliation query + one backtesting example" breakdown from
+the scope above.
 
 These analytical rules are not a separate PoC. They are the Athena/S3 expression of the canonical
 PoC scope in **PoC, Roadmap, and Risks**: "Missing field rate by source" is the analytical form of

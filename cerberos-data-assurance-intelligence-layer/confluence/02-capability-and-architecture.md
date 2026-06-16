@@ -135,7 +135,7 @@ Automatic rule deployment should not happen without approval.
 
 ## Initial Rule Categories
 
-Initial rule categories include completeness, freshness, duplicate detection, referential integrity, status validation, reconciliation, schema drift, anomaly detection, cross-system consistency, and data contract validation.
+Initial rule categories include completeness, freshness, duplicate detection, referential integrity, status validation, reconciliation, schema drift, anomaly detection, cross-system consistency, data contract validation, and source health.
 
 Detailed examples are captured in the child page **Rule Types, Data Model, and Examples**.
 

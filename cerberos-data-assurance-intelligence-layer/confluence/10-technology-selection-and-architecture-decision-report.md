@@ -22,7 +22,7 @@ The recommended first direction is a deliberately controlled JVM-based service t
 Candidate PoC direction:
 
 - Backend: JVM service aligned to existing Cerberos platform standards; Java 21 + Quarkus is a candidate PoC option.
-- Acceptable backend alternative: Spring Boot if Cerberos is already strongly Spring-based.
+- Acceptable backend alternative: Spring Boot if Cerberos is already strongly Spring-based. For OFFICIAL-SENSITIVE accreditation familiarity, Spring Boot is in fact the preferred default; Quarkus remains a candidate only where the team already uses it and accreditation is not blocked (see **Border-Security Constraints and Pre-Funding Conditions**, Amber flag #8).
 - Rule registry: Git-backed YAML rules for PoC, evolving to database-backed versioned registry.
 - Query execution: custom `SafeQueryExecutor` abstraction over JDBC/jOOQ and AWS Athena SDK.
 - Analytical data checks: Athena over S3/Parquet with Glue Data Catalog metadata where available.

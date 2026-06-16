@@ -225,7 +225,7 @@ Simple deployment diagram:
          |                                             |
          |  +----------------+    +----------------+   |
          |  | DQ Backend     |    | Review UI      |   |
-         |  | Quarkus        |<-->| React/Admin UI |   |
+         |  | JVM service    |<-->| React/Admin UI |   |
          |  +-------+--------+    +----------------+   |
          |          |                                  |
          |          v                                  |

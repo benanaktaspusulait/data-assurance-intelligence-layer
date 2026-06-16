@@ -392,7 +392,7 @@ row's hash); a periodic signed digest of the chain is stored separately, per
 **Governance, Security, and Scale**.
 
 This conceptual data model is the authoritative table set for the discovery concept. Other pages
-(such as **Technology Selection and Architecture Decision Report** and the ER diagram in
+(such as **Component Technology Choices** and the ER diagram in
 **Supporting Technical Detail**) reference subsets of these tables for illustration.
 
 ## Approved Rule Example

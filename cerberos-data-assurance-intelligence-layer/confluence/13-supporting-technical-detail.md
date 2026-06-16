@@ -134,7 +134,7 @@ erDiagram
 
 A draft JSON Schema to validate rule files in CI before they are merged. It validates the single
 canonical flat rule format used across the discovery pack (for example the rule examples in
-**Rule Types, Data Model, and Examples** and **Technology Selection and Architecture Decision Report**):
+**Rule Types, Data Model, and Examples** and **Component Technology Choices**):
 
 ```json
 {
@@ -253,7 +253,7 @@ Notes:
 
 - This schema is the authoritative validation for the canonical flat rule format. The rule examples
   in **Rule Types, Data Model, and Examples** (`CERB-DQ-101`) and in
-  **Technology Selection and Architecture Decision Report** (`CERB-DQ-001`) both validate against it.
+  **Component Technology Choices** (`CERB-DQ-001`) both validate against it.
 - The `query` pattern enforces SELECT/WITH only at the schema layer; the `SafeQueryExecutor` remains the authoritative control.
 - `allow_raw_samples` is constrained to `false` so raw PII cannot be enabled through a rule file.
 - `max_rows` and `timeout_seconds` are capped to keep cost and load bounded.
@@ -351,21 +351,26 @@ The score is recalculated by a scheduled job and stored on `dq_feedback_pattern`
 ## 6. Adaptive Threshold Calculation (Deterministic)
 
 Static thresholds drift out of date as volumes change, producing either false-positive spikes or
-missed issues. Thresholds can adapt without any machine learning, using a transparent, auditable
-rolling statistic per rule (or per rule + source + event-type segment).
+missed issues. A rule's threshold can adapt without any machine learning, using a transparent,
+auditable statistic computed from the **monitored metric's own baseline distribution** (not from
+finding counts, which would be circular).
 
-Over a rolling 7-day window of confirmed findings:
+Over a rolling 7-day window, the platform observes the rule's monitored metric (for example the
+missing-rate percent, duplicate rate, or hourly volume) during normal periods (windows with no
+confirmed incident), per rule (or per rule + source + event-type segment):
 
 ```text
-mean   = average confirmed-finding count for the segment
-stddev = standard deviation of that count
-adaptive_threshold = max(mean + 2 * stddev, configured_static_threshold)
+baseline_mean   = mean of the monitored metric over the window
+baseline_stddev = standard deviation of the monitored metric over the window
+adaptive_threshold = max(baseline_mean + k * baseline_stddev, configured_static_threshold)   // k typically 2-3
 ```
 
 Behaviour:
 
+- The threshold adapts the rule's data comparison (for example "missing_rate_percent > threshold"),
+  derived from the metric's normal distribution - not from how many findings were produced.
+- The configured static threshold is a safety floor: the adaptive value never goes below it.
 - Recalculated weekly by a scheduled job and stored alongside the rule version.
-- The adaptive value never goes below the rule's configured static threshold (a safety floor).
 - When the threshold changes, the rule owner is notified ("threshold auto-updated from X to Y"). If the
   owner does not accept it, the previous threshold remains in force.
 - The calculation is deterministic and fully explainable, so it is suitable for audit and governance.

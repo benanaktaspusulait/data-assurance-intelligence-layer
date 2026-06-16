@@ -178,6 +178,8 @@ Detailed guidance is captured in **S3, Parquet, Glue Data Catalog and Athena Ana
 | Medium | Hourly or daily digest. |
 | Low | Dashboard and reporting only. |
 
+Severity names shown here in title case (Critical/High/Medium/Low) correspond to the rule schema enum values in upper case (`CRITICAL`/`HIGH`/`MEDIUM`/`LOW`); they are the same severities.
+
 Alerting should include deduplication, grouping, cooldown periods, owner-based routing, and integration with Jira, ServiceNow, Teams, or Email.
 
 Repeated findings should update an existing incident where appropriate rather than creating unnecessary duplicates.

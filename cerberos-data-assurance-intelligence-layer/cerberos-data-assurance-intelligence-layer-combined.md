@@ -186,6 +186,7 @@ The right next step is not a full platform build. The right next step is a small
 - Structured feedback capture.
 - Basic confidence scoring.
 - One evidence-backed rule refinement suggestion.
+- One candidate new rule suggestion.
 
 The goal would be to test whether the human-in-the-loop learning model creates actionable data assurance value without production impact or governance risk.
 
@@ -403,7 +404,7 @@ Automatic rule deployment should not happen without approval.
 
 ## Initial Rule Categories
 
-Initial rule categories include completeness, freshness, duplicate detection, referential integrity, status validation, reconciliation, schema drift, anomaly detection, cross-system consistency, and data contract validation.
+Initial rule categories include completeness, freshness, duplicate detection, referential integrity, status validation, reconciliation, schema drift, anomaly detection, cross-system consistency, data contract validation, and source health.
 
 Detailed examples are captured in the child page **Rule Types, Data Model, and Examples**.
 
@@ -800,6 +801,8 @@ Detailed guidance is captured in **S3, Parquet, Glue Data Catalog and Athena Ana
 | High | Alert within defined SLA. |
 | Medium | Hourly or daily digest. |
 | Low | Dashboard and reporting only. |
+
+Severity names shown here in title case (Critical/High/Medium/Low) correspond to the rule schema enum values in upper case (`CRITICAL`/`HIGH`/`MEDIUM`/`LOW`); they are the same severities.
 
 Alerting should include deduplication, grouping, cooldown periods, owner-based routing, and integration with Jira, ServiceNow, Teams, or Email.
 
@@ -1528,7 +1531,7 @@ row's hash); a periodic signed digest of the chain is stored separately, per
 **Governance, Security, and Scale**.
 
 This conceptual data model is the authoritative table set for the discovery concept. Other pages
-(such as **Technology Selection and Architecture Decision Report** and the ER diagram in
+(such as **Component Technology Choices** and the ER diagram in
 **Supporting Technical Detail**) reference subsets of these tables for illustration.
 
 ## Approved Rule Example
@@ -2236,7 +2239,7 @@ for an eventual, accreditation-backed go/no-go decision - not to put agents into
 ### 1. Abstraction Layer Design
 
 **1.1 `AgentProvider` interface.** The existing `AgentAnalysisService` (defined in
-**Component Technology Choices**) remains the platform-facing facade; it delegates to an `AgentRouter`,
+**Component Technology Choices - Platform Services**) remains the platform-facing facade; it delegates to an `AgentRouter`,
 which selects a concrete `AgentProvider`. The provider abstraction is:
 
 ```java
@@ -2625,7 +2628,7 @@ The recommended first direction is a deliberately controlled JVM-based service t
 Candidate PoC direction:
 
 - Backend: JVM service aligned to existing Cerberos platform standards; Java 21 + Quarkus is a candidate PoC option.
-- Acceptable backend alternative: Spring Boot if Cerberos is already strongly Spring-based.
+- Acceptable backend alternative: Spring Boot if Cerberos is already strongly Spring-based. For OFFICIAL-SENSITIVE accreditation familiarity, Spring Boot is in fact the preferred default; Quarkus remains a candidate only where the team already uses it and accreditation is not blocked (see **Border-Security Constraints and Pre-Funding Conditions**, Amber flag #8).
 - Rule registry: Git-backed YAML rules for PoC, evolving to database-backed versioned registry.
 - Query execution: custom `SafeQueryExecutor` abstraction over JDBC/jOOQ and AWS Athena SDK.
 - Analytical data checks: Athena over S3/Parquet with Glue Data Catalog metadata where available.
@@ -3267,7 +3270,7 @@ Simple deployment diagram:
          |                                             |
          |  +----------------+    +----------------+   |
          |  | DQ Backend     |    | Review UI      |   |
-         |  | Quarkus        |<-->| React/Admin UI |   |
+         |  | JVM service    |<-->| React/Admin UI |   |
          |  +-------+--------+    +----------------+   |
          |          |                                  |
          |          v                                  |
@@ -4037,7 +4040,7 @@ erDiagram
 
 A draft JSON Schema to validate rule files in CI before they are merged. It validates the single
 canonical flat rule format used across the discovery pack (for example the rule examples in
-**Rule Types, Data Model, and Examples** and **Technology Selection and Architecture Decision Report**):
+**Rule Types, Data Model, and Examples** and **Component Technology Choices**):
 
 ```json
 {
@@ -4156,7 +4159,7 @@ Notes:
 
 - This schema is the authoritative validation for the canonical flat rule format. The rule examples
   in **Rule Types, Data Model, and Examples** (`CERB-DQ-101`) and in
-  **Technology Selection and Architecture Decision Report** (`CERB-DQ-001`) both validate against it.
+  **Component Technology Choices** (`CERB-DQ-001`) both validate against it.
 - The `query` pattern enforces SELECT/WITH only at the schema layer; the `SafeQueryExecutor` remains the authoritative control.
 - `allow_raw_samples` is constrained to `false` so raw PII cannot be enabled through a rule file.
 - `max_rows` and `timeout_seconds` are capped to keep cost and load bounded.
@@ -4254,21 +4257,26 @@ The score is recalculated by a scheduled job and stored on `dq_feedback_pattern`
 ## 6. Adaptive Threshold Calculation (Deterministic)
 
 Static thresholds drift out of date as volumes change, producing either false-positive spikes or
-missed issues. Thresholds can adapt without any machine learning, using a transparent, auditable
-rolling statistic per rule (or per rule + source + event-type segment).
+missed issues. A rule's threshold can adapt without any machine learning, using a transparent,
+auditable statistic computed from the **monitored metric's own baseline distribution** (not from
+finding counts, which would be circular).
 
-Over a rolling 7-day window of confirmed findings:
+Over a rolling 7-day window, the platform observes the rule's monitored metric (for example the
+missing-rate percent, duplicate rate, or hourly volume) during normal periods (windows with no
+confirmed incident), per rule (or per rule + source + event-type segment):
 
 ```text
-mean   = average confirmed-finding count for the segment
-stddev = standard deviation of that count
-adaptive_threshold = max(mean + 2 * stddev, configured_static_threshold)
+baseline_mean   = mean of the monitored metric over the window
+baseline_stddev = standard deviation of the monitored metric over the window
+adaptive_threshold = max(baseline_mean + k * baseline_stddev, configured_static_threshold)   // k typically 2-3
 ```
 
 Behaviour:
 
+- The threshold adapts the rule's data comparison (for example "missing_rate_percent > threshold"),
+  derived from the metric's normal distribution - not from how many findings were produced.
+- The configured static threshold is a safety floor: the adaptive value never goes below it.
 - Recalculated weekly by a scheduled job and stored alongside the rule version.
-- The adaptive value never goes below the rule's configured static threshold (a safety floor).
 - When the threshold changes, the rule owner is notified ("threshold auto-updated from X to Y"). If the
   owner does not accept it, the previous threshold remains in force.
 - The calculation is deterministic and fully explainable, so it is suitable for audit and governance.
@@ -4925,12 +4933,15 @@ Suggested PoC scope:
 - No raw PII.
 - No direct agent access to Athena.
 
-Candidate PoC rules:
+Candidate analytical items (mapping to the scope above):
 
-1. Source volume baseline check.
-2. Missing field rate by source.
-3. Inbound vs processed reconciliation.
-4. Candidate rule backtest over 7 or 28 days.
+1. Source volume baseline check - Athena DQ rule.
+2. Missing field rate by source - Athena DQ rule.
+3. Inbound vs processed reconciliation - reconciliation query.
+4. Candidate rule backtest over 7 or 28 days - evaluation activity, not a standing rule.
+
+This is the "two Athena DQ rules + one reconciliation query + one backtesting example" breakdown from
+the scope above.
 
 These analytical rules are not a separate PoC. They are the Athena/S3 expression of the canonical
 PoC scope in **PoC, Roadmap, and Risks**: "Missing field rate by source" is the analytical form of

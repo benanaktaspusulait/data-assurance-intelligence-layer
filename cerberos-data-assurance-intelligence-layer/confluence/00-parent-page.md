@@ -150,6 +150,7 @@ The right next step is not a full platform build. The right next step is a small
 - Structured feedback capture.
 - Basic confidence scoring.
 - One evidence-backed rule refinement suggestion.
+- One candidate new rule suggestion.
 
 The goal would be to test whether the human-in-the-loop learning model creates actionable data assurance value without production impact or governance risk.
 

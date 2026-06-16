@@ -22,7 +22,7 @@ for an eventual, accreditation-backed go/no-go decision - not to put agents into
 ### 1. Abstraction Layer Design
 
 **1.1 `AgentProvider` interface.** The existing `AgentAnalysisService` (defined in
-**Component Technology Choices**) remains the platform-facing facade; it delegates to an `AgentRouter`,
+**Component Technology Choices - Platform Services**) remains the platform-facing facade; it delegates to an `AgentRouter`,
 which selects a concrete `AgentProvider`. The provider abstraction is:
 
 ```java
